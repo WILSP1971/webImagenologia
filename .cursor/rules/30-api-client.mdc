@@ -1,0 +1,70 @@
+---
+description: Reglas para el cliente HTTP de la API Esculapio — IEsculapioApiClient
+globs:
+  - "src/**/Services/**"
+  - "src/**/Models/ApiDtos/**"
+---
+
+# Reglas del Cliente API Esculapio
+
+## Principio de unicidad
+`HttpClient` se instancia **una sola vez** en toda la solución, a través de
+`IHttpClientFactory` registrado en `Program.cs`:
+
+```csharp
+builder.Services.AddHttpClient<IEsculapioApiClient, EsculapioApiClient>(client =>
+{
+    client.BaseAddress = new Uri(builder.Configuration["EsculapioApi:BaseUrl"]!);
+    client.Timeout = TimeSpan.FromSeconds(30);
+});
+```
+
+## URL base
+```
+https://appsintranet.esculapiosis.com/ApiCampbell/api
+```
+Configurada en `appsettings.json` bajo `EsculapioApi:BaseUrl`.
+
+## Interfaz requerida `IEsculapioApiClient`
+Debe exponer exactamente estos métodos (async, retornan tipos fuertemente tipados):
+
+```csharp
+Task<IEnumerable<ServidorDto>> ObtenerServidoresAsync(CancellationToken ct = default);
+
+Task<IEnumerable<EmpresaDto>> ObtenerEmpresasAsync(
+    string ipConexion, string bdConexion, string portConexion,
+    string usuario, string password, CancellationToken ct = default);
+
+Task<UsuarioConexionDto> ValidarConexionAsync(
+    string ipConexion, string usuario, string password, CancellationToken ct = default);
+
+Task<DiagnosticoDto> ObtenerDiagnosticoCuentaAsync(
+    string empresa, decimal noCuenta, CancellationToken ct = default);
+
+Task<IEnumerable<NotaMedicaDto>> ObtenerNotasMedicasCuentaAsync(
+    string empresa, decimal noCuenta, CancellationToken ct = default);
+```
+
+Para los endpoints propios de las tablas de estudiosdiagnosticos, agregar métodos
+conforme se requieran en cada fase, siguiendo la misma convención de nombres.
+
+## Manejo de errores en el cliente
+```csharp
+var response = await _http.GetAsync(url, ct);
+if (!response.IsSuccessStatusCode)
+{
+    var body = await response.Content.ReadAsStringAsync(ct);
+    throw new EsculapioApiException(response.StatusCode, body);
+}
+return await response.Content.ReadFromJsonAsync<T>(ct) ?? throw new InvalidOperationException("Respuesta vacía");
+```
+
+## Reglas de serialización JSON
+- Usar `System.Text.Json` (no Newtonsoft)
+- `PropertyNameCaseInsensitive = true` en opciones globales
+- DTOs con `record` y propiedades con nombres exactos del JSON de la API
+
+## Prohibiciones
+- Nunca instanciar `new HttpClient()` fuera de `EsculapioApiClient.cs`
+- Nunca usar `WebClient` ni `HttpWebRequest`
+- Nunca deserializar con `dynamic` o `JObject`

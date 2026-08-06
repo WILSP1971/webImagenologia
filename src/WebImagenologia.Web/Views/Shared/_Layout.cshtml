@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Imagenología Esculapio</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="app-body">
+    <header class="app-header">
+        <nav class="navbar navbar-expand-lg navbar-dark app-navbar mb-0" aria-label="Navegación principal">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-semibold" asp-controller="Home" asp-action="Index">
+                    Imagenología Esculapio
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain"
+                        aria-controls="navbarMain" aria-expanded="false" aria-label="Alternar menú">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarMain">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">Inicio</a>
+                            </li>
+                            @if (User.IsInRole(RoleNames.Administrador))
+                            {
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown"
+                                       data-bs-auto-close="outside" aria-expanded="false" id="navParametros">
+                                        Parámetros
+                                    </a>
+                                    <ul class="dropdown-menu shadow-sm" aria-labelledby="navParametros">
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Parametros" asp-action="Radiologos">
+                                                Radiólogos por Empresa
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Parametros" asp-action="Operadores">
+                                                Operadores por Empresa
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Parametros" asp-action="Estudios">
+                                                Parametrización de Estudios
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Condicional" asp-action="Automatizacion">
+                                                Automatización Programación de Estudios
+                                            </a>
+                                        </li>
+                                        <li><hr class="dropdown-divider" /></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Condicional" asp-action="Asignacion">
+                                                Asignación de Estudios por Empresa
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="PortalRadiologos" asp-action="Index">Portal Web Radiólogos</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Lecturas" asp-action="Index">Portal Web Lecturas Estudios</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Reportes" asp-action="Index">Consultas/Reportes</a>
+                                </li>
+                            }
+                            @if (User.IsInRole(RoleNames.Radiologo))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="PortalRadiologos" asp-action="Index">Portal Web Radiólogos</a>
+                                </li>
+                            }
+                            @if (User.IsInRole(RoleNames.Operador))
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link" asp-controller="Lecturas" asp-action="Index">Portal Web Lecturas Estudios</a>
+                                </li>
+                            }
+                        </ul>
+                        <ul class="navbar-nav ms-auto align-items-lg-center gap-lg-1">
+                            <li class="nav-item">
+                                <div class="navbar-user-pill" title="@User.GetLoginName()">
+                                    <span class="navbar-user-avatar" aria-hidden="true">@User.GetInitials()</span>
+                                    <div class="navbar-user-meta d-none d-md-block">
+                                        <span class="navbar-user-name">@User.GetDisplayName()</span>
+                                        @if (User.IsInRole(RoleNames.Administrador))
+                                        {
+                                            <span class="navbar-user-role">Administrador</span>
+                                        }
+                                        else if (User.IsInRole(RoleNames.Radiologo))
+                                        {
+                                            <span class="navbar-user-role">Radiólogo</span>
+                                        }
+                                        else if (User.IsInRole(RoleNames.Operador))
+                                        {
+                                            <span class="navbar-user-role">Operador</span>
+                                        }
+                                    </div>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-logout" asp-controller="Account" asp-action="Logout">Salir</a>
+                            </li>
+                        </ul>
+                    }
+                    else
+                    {
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Account" asp-action="Login">Acceder</a>
+                            </li>
+                        </ul>
+                    }
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <div class="container-fluid container-lg app-main pb-4">
+        <main role="main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="app-footer footer text-muted py-3 mt-auto">
+        <div class="container d-flex justify-content-between">
+            <span>&copy; @DateTime.Now.Year Esculapio — Imagenología</span>
+            <span class="small">v1.0.0</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+            integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+            crossorigin="anonymous"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/navbar.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

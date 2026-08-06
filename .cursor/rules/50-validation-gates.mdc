@@ -1,0 +1,62 @@
+---
+description: Gates de validación binarios que deben cumplirse antes de que el orquestador marque una fase como PASS
+alwaysApply: true
+---
+
+# Validation Gates — webImagenologia
+
+Estos gates son evaluados por `agentic/orchestrator.py` al final de cada fase.
+Un sub-agente debe reportar PASS **solo si todos los gates aplicables están en verde**.
+
+## Gates universales (todas las fases)
+
+| Gate | Comando / Verificación | Criterio PASS |
+|------|------------------------|---------------|
+| `build` | `dotnet build src/WebImagenologia.sln` | exit code 0 |
+| `secrets` | regex sobre todo `src/`: `password\s*=\s*"[^"]{4,}"` | 0 coincidencias |
+| `no-sql-inline` | regex sobre `Controllers/`: `SELECT\|INSERT\|UPDATE\|DELETE` | 0 coincidencias |
+| `no-direct-http` | `new HttpClient()` en archivos distintos de `EsculapioApiClient.cs` | 0 coincidencias |
+
+## Gates de código (fases con código .cs)
+
+| Gate | Verificación | Criterio PASS |
+|------|--------------|---------------|
+| `tests` | `dotnet test src/WebImagenologia.Tests/` | 100% verde |
+| `format` | `dotnet format --verify-no-changes src/WebImagenologia.sln` | exit code 0 |
+| `lint-cshtml` | regex en `Views/`: `@\{[^}]*await\s` | 0 coincidencias |
+| `api-client-unicity` | `HttpClient` solo en `EsculapioApiClient.cs` | verificado |
+| `endpoints-cubiertos` | cada endpoint de `docs/specs.md` tiene método en `IEsculapioApiClient` | verificado |
+| `accessibility` | todo `<input>` tiene `<label>` o `aria-label` | verificado manualmente |
+
+## Gates específicos por fase
+
+| Fase | Gate adicional |
+|------|---------------|
+| 02 (Auth) | Login con servidor mock retorna sesión cifrada válida |
+| 08 (Portal Radiólogos) | Audio upload acepta mp3/wav/ogg/m4a, rechaza exe/bat |
+| 11 (N8N) | `n8n/workflows/programacion-estudios.json` es JSON válido e importable |
+| 12 (QA) | Todos los gates anteriores en PASS |
+
+## Formato de reporte YAML esperado
+
+```yaml
+phase: "01"
+status: PASS   # PASS | FAIL | BLOCKED
+artifacts:
+  - src/WebImagenologia.Web/Program.cs
+  - src/WebImagenologia.Web/WebImagenologia.Web.csproj
+validations:
+  build: ok
+  tests: 5/5
+  lint: ok
+  secrets: ok
+  endpoints_cubiertos:
+    - ObtenerServidoresAsync
+  ui_routes:
+    - GET /Account/Login
+blockers: []
+next_phase: "02"
+notes: |
+  Solución creada con dotnet new mvc. DI de EsculapioApiClient configurada.
+  Bootstrap 5 CDN incluido en _Layout.cshtml.
+```

@@ -1,0 +1,341 @@
+@model WebImagenologia.Web.Models.ViewModels.ReportesViewModel
+@{
+    ViewData["Title"] = "Consultas y Reportes";
+    Layout = "_Layout";
+    var exportUrl = Url.Action("ExportarExcel", "Reportes") ?? string.Empty;
+}
+
+<header class="param-page-header mb-4">
+    <h1 class="h3 mb-0">Consultas y Reportes</h1>
+    <partial name="_BotonRegresar" />
+</header>
+
+@if (ViewData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Filtros de consulta</h2>
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+        <form asp-action="Consultar" asp-controller="Reportes" method="post" novalidate id="formConsultar">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3">
+                <div class="col-md-12">
+                    <fieldset class="border rounded p-3">
+                        <legend class="form-label fs-6 mb-2">@Html.DisplayNameFor(m => m.EmpresasSeleccionadas)</legend>
+                        <div class="row g-2">
+                            @foreach (var empresa in Model.EmpresasDisponibles)
+                            {
+                                var checkboxId = $"empresa_{empresa.Codigo}";
+                                <div class="col-md-4 col-lg-3">
+                                    <div class="form-check">
+                                        <input type="checkbox"
+                                               class="form-check-input empresa-checkbox"
+                                               name="EmpresasSeleccionadas"
+                                               value="@empresa.Codigo"
+                                               id="@checkboxId"
+                                               @(Model.EmpresasSeleccionadas.Contains(empresa.Codigo) ? "checked" : null) />
+                                        <label class="form-check-label" for="@checkboxId">
+                                            @empresa.Nombre (@empresa.Codigo)
+                                        </label>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="EmpresasSeleccionadas" class="text-danger"></span>
+                    </fieldset>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="CodDependencia" class="form-label"></label>
+                    <select asp-for="CodDependencia"
+                            class="form-select"
+                            id="selectDependencia"
+                            data-servicios-url="@Url.Action("ServiciosPorDependencia", "Reportes")">
+                        <option value="">-- Todas --</option>
+                        @foreach (var dependencia in Model.DependenciasDisponibles)
+                        {
+                            if (dependencia.CodDependencia == Model.CodDependencia)
+                            {
+                                <option value="@dependencia.CodDependencia" selected="selected">@dependencia.NombreDependencia</option>
+                            }
+                            else
+                            {
+                                <option value="@dependencia.CodDependencia">@dependencia.NombreDependencia</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="CodServicio" class="form-label"></label>
+                    <select asp-for="CodServicio" class="form-select" id="selectServicio">
+                        <option value="">-- Todos --</option>
+                        @foreach (var servicio in Model.ServiciosDisponibles)
+                        {
+                            if (servicio.CodServicio == Model.CodServicio)
+                            {
+                                <option value="@servicio.CodServicio" selected="selected">@servicio.NombreServicio</option>
+                            }
+                            else
+                            {
+                                <option value="@servicio.CodServicio">@servicio.NombreServicio</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="CedulaMedico" class="form-label"></label>
+                    <select asp-for="CedulaMedico"
+                            class="form-select"
+                            id="selectMedico"
+                            data-medicos-url="@Url.Action("MedicosPorEmpresa", "Reportes")">
+                        <option value="">-- Todos --</option>
+                        @foreach (var medico in Model.MedicosDisponibles)
+                        {
+                            if (medico.Cedula == Model.CedulaMedico)
+                            {
+                                <option value="@medico.Cedula" selected="selected">@medico.Nombre (@medico.Cedula)</option>
+                            }
+                            else
+                            {
+                                <option value="@medico.Cedula">@medico.Nombre (@medico.Cedula)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="Estado" class="form-label"></label>
+                    <select asp-for="Estado" class="form-select" aria-required="true">
+                        <option value="TODO">Todos</option>
+                        <option value="PEN">Pendiente</option>
+                        <option value="LEI">Leído</option>
+                    </select>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="FechaInicial" class="form-label"></label>
+                    <input asp-for="FechaInicial"
+                           class="form-control"
+                           type="date"
+                           id="fechaInicial"
+                           aria-required="true" />
+                    <span asp-validation-for="FechaInicial" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="FechaFinal" class="form-label"></label>
+                    <input asp-for="FechaFinal"
+                           class="form-control"
+                           type="date"
+                           id="fechaFinal"
+                           aria-required="true" />
+                    <span asp-validation-for="FechaFinal" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-12">
+                    <label asp-for="TipoReporte" class="form-label"></label>
+                    <ul class="nav nav-tabs" id="reporteTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.TipoReporte == "DETALLE" ? "active" : "")"
+                                    type="button"
+                                    data-tipo-reporte="DETALLE"
+                                    role="tab"
+                                    aria-selected="@(Model.TipoReporte == "DETALLE")">
+                                Detalle de Estudios
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.TipoReporte == "RESUMEN" ? "active" : "")"
+                                    type="button"
+                                    data-tipo-reporte="RESUMEN"
+                                    role="tab"
+                                    aria-selected="@(Model.TipoReporte == "RESUMEN")">
+                                Resumen por Radiólogo
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.TipoReporte == "SIN_RESULTADO" ? "active" : "")"
+                                    type="button"
+                                    data-tipo-reporte="SIN_RESULTADO"
+                                    role="tab"
+                                    aria-selected="@(Model.TipoReporte == "SIN_RESULTADO")">
+                                Estudios Sin Resultado
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link @(Model.TipoReporte == "PROGRAMACION" ? "active" : "")"
+                                    type="button"
+                                    data-tipo-reporte="PROGRAMACION"
+                                    role="tab"
+                                    aria-selected="@(Model.TipoReporte == "PROGRAMACION")">
+                                Programación por Empresa
+                            </button>
+                        </li>
+                    </ul>
+                    <input type="hidden" asp-for="TipoReporte" id="tipoReporte" />
+                </div>
+
+                <div class="col-md-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Consultar</button>
+                    <button type="button"
+                            class="btn btn-outline-success"
+                            id="btnExportarExcel"
+                            data-export-url="@exportUrl">
+                        Exportar Excel
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Resultados</h2>
+
+        @if (Model.TipoReporte == "RESUMEN")
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle" aria-label="Resumen por radiólogo">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Cédula</th>
+                            <th scope="col">Radiólogo</th>
+                            <th scope="col">Asignados</th>
+                            <th scope="col">Leídos</th>
+                            <th scope="col">Pendientes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.ResumenRadiologos)
+                        {
+                            <tr>
+                                <td>@row.CedulaMedico</td>
+                                <td>@row.NombreMedico</td>
+                                <td>@row.TotalAsignados</td>
+                                <td>@row.TotalLeidos</td>
+                                <td>@row.TotalPendientes</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.ResumenRadiologos.Count == 0)
+            {
+                <p class="text-muted mb-0">No hay datos para los filtros seleccionados.</p>
+            }
+        }
+        else if (Model.TipoReporte == "SIN_RESULTADO")
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle" aria-label="Estudios sin resultado">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Empresa</th>
+                            <th scope="col">No. Cuenta</th>
+                            <th scope="col">No. Orden</th>
+                            <th scope="col">Servicio</th>
+                            <th scope="col">Dependencia</th>
+                            <th scope="col">Fecha Orden</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.EstudiosSinResultado)
+                        {
+                            <tr>
+                                <td>@row.Empresa</td>
+                                <td>@row.NoCuenta</td>
+                                <td>@row.NoOrden</td>
+                                <td>@row.Servicio</td>
+                                <td>@row.Dependencia</td>
+                                <td>@row.FechaOrden.ToString("dd/MM/yyyy")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.EstudiosSinResultado.Count == 0)
+            {
+                <p class="text-muted mb-0">No hay estudios sin resultado para los filtros seleccionados.</p>
+            }
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover table-sm align-middle" aria-label="Detalle de estudios">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Empresa</th>
+                            <th scope="col">Consecutivo</th>
+                            <th scope="col">No. Cuenta</th>
+                            <th scope="col">Médico</th>
+                            <th scope="col">Servicio</th>
+                            <th scope="col">Dependencia</th>
+                            <th scope="col">Fecha Programación</th>
+                            <th scope="col">Estado</th>
+                            <th scope="col">Audio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var row in Model.DetalleEstudios)
+                        {
+                            <tr>
+                                <td>@row.Empresa</td>
+                                <td>@row.Consecutivo</td>
+                                <td>@row.NoCuenta</td>
+                                <td>@row.NombreMedico</td>
+                                <td>@row.NombreServicio</td>
+                                <td>@row.NombreDependencia</td>
+                                <td>@row.FechaProgramacion.ToString("dd/MM/yyyy")</td>
+                                <td>@FormatEstado(row.Estado)</td>
+                                <td>
+                                    @if (row.TieneAudio)
+                                    {
+                                        <span class="text-success" aria-label="Tiene audio">&#128266;</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted" aria-label="Sin audio">—</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            @if (Model.DetalleEstudios.Count == 0)
+            {
+                <p class="text-muted mb-0">No hay estudios para los filtros seleccionados.</p>
+            }
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/reportes.js" asp-append-version="true"></script>
+}
+
+@functions {
+    private static string FormatEstado(string estado) =>
+        estado.ToUpperInvariant() switch
+        {
+            "PEN" or "PEND" or "PENDIENTE" => "Pendiente",
+            "LEI" or "LEIDO" => "Leído",
+            _ => estado
+        };
+}

@@ -1,0 +1,50 @@
+---
+description: Convenciones para workflows N8N del proyecto webImagenologia
+globs:
+  - "n8n/**"
+---
+
+# Convenciones N8N — webImagenologia
+
+## URL de instancia N8N
+```
+https://n8n.esculapiosis.com
+```
+
+## Workflow principal
+**Archivo**: `n8n/workflows/programacion-estudios.json`
+**Nombre en N8N**: `ProgramacionEstudiosDiagnosticos`
+
+## Estructura del workflow (nodos requeridos)
+
+```
+[Trigger: Cron]
+    → [MySQL: ConsOrdenesResultados]
+    → [Function: Filtrar por parametros]
+    → [MySQL: Get_ProgramacionEstudiosDiagnosticos]
+    → [HTTP: Notificar resultado al Web]  (opcional)
+```
+
+### Nodo Cron
+- Frecuencia configurable desde `estudiosdiagnosticos_automatizacionwf`
+- El web invoca el webhook de activación/desactivación cuando el usuario
+  modifica la automatización en la UI
+
+### Nodo MySQL `ConsOrdenesResultados`
+- SP: `CALL ConsOrdenesResultados(?, ?, ?, ?)`
+- Parámetros: `Empresa`, `FechaInicial`, `FechaFinal`, `LabRX`
+- Retorna: estudios sin resultado para distribuir
+
+### Nodo MySQL `Get_ProgramacionEstudiosDiagnosticos`
+- SP: `CALL Get_ProgramacionEstudiosDiagnosticos()`
+- Inserta en `estudiosdiagnosticos_programacion` los estudios asignados a cada radiólogo
+
+## Reglas de exportación
+- Siempre exportar el workflow a `n8n/workflows/programacion-estudios.json`
+  después de cada modificación en la UI de N8N
+- No hardcodear credenciales en el JSON — usar N8N Credentials Store
+- Variables de entorno N8N referenciadas como `{{ $env.VARIABLE_NAME }}`
+
+## Versionado
+- El JSON exportado debe ser commiteado junto con los cambios del web que lo disparan
+- Incluir en el mensaje de commit: `feat(n8n): descripción del cambio`

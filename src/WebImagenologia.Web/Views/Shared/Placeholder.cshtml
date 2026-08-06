@@ -1,0 +1,10 @@
+@model WebImagenologia.Web.Models.ViewModels.PlaceholderViewModel
+@{
+    ViewData["Title"] = Model.Titulo;
+    Layout = "_Layout";
+}
+
+<div class="alert alert-info" role="status">
+    <h1 class="h4 alert-heading">@Model.Titulo</h1>
+    <p class="mb-0">@Model.Mensaje</p>
+</div>

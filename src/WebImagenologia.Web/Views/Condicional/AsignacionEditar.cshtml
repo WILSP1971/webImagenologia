@@ -1,0 +1,86 @@
+@model WebImagenologia.Web.Models.ViewModels.AsignacionViewModel
+@{
+    ViewData["Title"] = "Editar asignación";
+    Layout = "_Layout";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Editar asignación</h1>
+    <a asp-action="Asignacion" class="btn btn-outline-secondary">Volver</a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                <form asp-action="RegistrarAsignacion" asp-controller="Condicional" method="post" novalidate id="formAsignacion">
+                    <input type="hidden" asp-for="ModoEdicion" />
+                    <input type="hidden" asp-for="Empresa" />
+                    <input type="hidden" asp-for="CedulaMedico" />
+                    <input type="hidden" asp-for="CodDependencia" />
+                    <input type="hidden" asp-for="CodServicio" />
+
+                    <div class="mb-3">
+                        <label asp-for="Empresa" class="form-label"></label>
+                        <input asp-for="Empresa"
+                               class="form-control"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreMedico" class="form-label"></label>
+                        <input asp-for="NombreMedico"
+                               class="form-control"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreDependencia" class="form-label"></label>
+                        <input asp-for="NombreDependencia"
+                               class="form-control"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreServicio" class="form-label"></label>
+                        <input asp-for="NombreServicio"
+                               class="form-control"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Cantidad" class="form-label"></label>
+                        <input asp-for="Cantidad"
+                               class="form-control"
+                               type="number"
+                               min="1"
+                               step="1"
+                               aria-required="true" />
+                        <span asp-validation-for="Cantidad" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Estado" class="form-label"></label>
+                        <select asp-for="Estado" class="form-select" aria-required="true">
+                            <option value="ACT">Activo</option>
+                            <option value="INA">Inactivo</option>
+                        </select>
+                        <span asp-validation-for="Estado" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

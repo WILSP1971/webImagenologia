@@ -1,0 +1,277 @@
+@model WebImagenologia.Web.Models.ViewModels.PortalRadiologosViewModel
+@{
+    ViewData["Title"] = "Portal Web Radiólogos";
+    Layout = "_Layout";
+}
+
+<section class="param-page portal-page">
+    <header class="param-page-header mb-4">
+        <div>
+            <p class="param-page-kicker mb-1">Portal clínico</p>
+            <h1 class="param-page-title h3 mb-0">Portal Web Radiólogos</h1>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+            <span class="text-muted small" id="fechaHoraDisplay" aria-live="polite">
+                @Model.FechaHora.ToString("dd/MM/yyyy HH:mm")
+            </span>
+            <partial name="_BotonRegresar" />
+        </div>
+    </header>
+
+    <div id="alertPortal" class="alert d-none" role="alert" aria-live="assertive"></div>
+
+    <div class="param-card mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="selectEmpresa" class="form-label">Empresa</label>
+                <select id="selectEmpresa"
+                        class="form-select"
+                        aria-required="true"
+                        data-estudios-url="@Url.Action("EstudiosPorEmpresa", "PortalRadiologos")">
+                    @foreach (var empresa in Model.EmpresasDisponibles)
+                    {
+                        if (empresa.Codigo == Model.EmpresaSeleccionada)
+                        {
+                            <option value="@empresa.Codigo"
+                                    data-nombre="@empresa.Nombre"
+                                    selected="selected">
+                                @empresa.Nombre (@empresa.Codigo)
+                            </option>
+                        }
+                        else
+                        {
+                            <option value="@empresa.Codigo"
+                                    data-nombre="@empresa.Nombre">
+                                @empresa.Nombre (@empresa.Codigo)
+                            </option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="nombreEmpresa" class="form-label">Nombre Empresa</label>
+                <input type="text"
+                       id="nombreEmpresa"
+                       class="form-control"
+                       value="@Model.NombreEmpresa"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+        </div>
+    </div>
+
+    <div class="param-card param-card-table mb-4">
+        <h2 class="param-card-title h5">Programación de Lecturas</h2>
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle mb-0 param-table" id="gridEstudios" aria-label="Estudios programados">
+                <thead>
+                    <tr>
+                        <th scope="col">No. Cuenta</th>
+                        <th scope="col">Paciente</th>
+                        <th scope="col">Servicio</th>
+                        <th scope="col">Fecha</th>
+                        <th scope="col">Dependencia</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Audio</th>
+                        <th scope="col"><span class="visually-hidden">Acciones</span></th>
+                    </tr>
+                </thead>
+                <tbody id="gridEstudiosBody">
+                    @foreach (var estudio in Model.EstudiosProgramados)
+                    {
+                        <tr data-consecutivo="@estudio.Consecutivo"
+                            data-empresa="@estudio.Empresa"
+                            data-no-cuenta="@estudio.NoCuenta"
+                            class="estudio-row">
+                            <td>@estudio.NoCuenta</td>
+                            <td>@(string.IsNullOrWhiteSpace(estudio.Paciente) ? "—" : estudio.Paciente)</td>
+                            <td>@estudio.Servicio</td>
+                            <td>@estudio.FechaProgramacion.ToString("dd/MM/yyyy")</td>
+                            <td>@estudio.Dependencia</td>
+                            <td>@estudio.Estado</td>
+                            <td class="audio-icon-cell">
+                                @if (estudio.TieneAudio)
+                                {
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-success btn-play-grid"
+                                            data-consecutivo="@estudio.Consecutivo"
+                                            data-empresa="@estudio.Empresa"
+                                            data-no-cuenta="@estudio.NoCuenta"
+                                            aria-label="Reproducir audio cuenta @estudio.NoCuenta"
+                                            title="Reproducir audio">
+                                        ▶ Reproducir
+                                    </button>
+                                }
+                                else
+                                {
+                                    <span class="text-muted small">—</span>
+                                }
+                            </td>
+                            <td>
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-primary btn-seleccionar"
+                                        aria-label="Seleccionar estudio @estudio.NoCuenta">
+                                    Seleccionar
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        @if (Model.EstudiosProgramados.Count == 0)
+        {
+            <p class="text-muted mb-0 mt-2" id="sinEstudiosMsg">No hay estudios pendientes para la empresa seleccionada.</p>
+        }
+    </div>
+
+    <div class="param-card mb-4" id="panelDetalleCaso" hidden>
+        <h2 class="param-card-title h5">Información del caso</h2>
+        <div class="row g-3 mb-0">
+            <div class="col-md-3">
+                <label for="detalleNoCuenta" class="form-label">No. Cuenta</label>
+                <input type="text" id="detalleNoCuenta" class="form-control" readonly aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleNoOrden" class="form-label">No. Orden</label>
+                <input type="text" id="detalleNoOrden" class="form-control" readonly aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleServicio" class="form-label">Servicio</label>
+                <input type="text" id="detalleServicio" class="form-control" readonly aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleDependencia" class="form-label">Dependencia</label>
+                <input type="text" id="detalleDependencia" class="form-control" readonly aria-readonly="true" />
+            </div>
+        </div>
+    </div>
+
+    <div class="param-card mb-4 portal-tabs-card">
+        <ul class="nav nav-tabs portal-tabs mb-3" id="tabsDetalle" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="tab-diagnosticos-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tabDiagnosticos"
+                        type="button"
+                        role="tab"
+                        aria-controls="tabDiagnosticos"
+                        aria-selected="true">
+                    Diagnósticos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="tab-notas-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tabNotas"
+                        type="button"
+                        role="tab"
+                        aria-controls="tabNotas"
+                        aria-selected="false">
+                    Notas Médicas
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="tab-audio-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tabAudio"
+                        type="button"
+                        role="tab"
+                        aria-controls="tabAudio"
+                        aria-selected="false">
+                    Subir Audio
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content portal-tab-content" id="tabsDetalleContent">
+            <div class="tab-pane fade show active" id="tabDiagnosticos" role="tabpanel" aria-labelledby="tab-diagnosticos-btn">
+                <div id="listaDiagnosticos" class="portal-tab-body text-muted">
+                    Seleccione un estudio del grid para ver los diagnósticos.
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tabNotas" role="tabpanel" aria-labelledby="tab-notas-btn">
+                <div id="listaNotas" class="portal-tab-body text-muted">
+                    Seleccione un estudio del grid para ver las notas médicas.
+                </div>
+            </div>
+            <div class="tab-pane fade" id="tabAudio" role="tabpanel" aria-labelledby="tab-audio-btn">
+                <div id="panelAudioContent" class="portal-tab-body">
+                    <p id="audioSinSeleccion" class="text-muted mb-0">
+                        Seleccione un estudio del grid para subir o reproducir audio.
+                    </p>
+                    <div id="audioFormulario" hidden>
+                        <p class="small text-muted mb-3" id="audioCasoLabel"></p>
+                        <p class="small text-muted mb-3">
+                            Formatos de audio aceptados (mp3, wav, ogg, m4a, aac, flac, webm, etc.). Máximo 25 MB.
+                        </p>
+
+                        <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+                            <div class="flex-grow-1" style="min-width: 14rem;">
+                                <label for="inputAudio" class="form-label">Archivo de audio</label>
+                                <input type="file"
+                                       id="inputAudio"
+                                       class="form-control"
+                                       accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac,.webm,.wma,.opus"
+                                       aria-describedby="audioHelp" />
+                            </div>
+                            <div class="d-flex flex-wrap gap-2 align-self-end">
+                                <button type="button" class="btn btn-primary" id="btnSubirAudio">Subir</button>
+                                <button type="button" class="btn btn-success" id="btnGrabar" data-bs-toggle="modal" data-bs-target="#modalGrabar">
+                                    Grabar
+                                </button>
+                                <button type="button" class="btn btn-outline-danger" id="btnEliminarAudio" disabled>
+                                    Eliminar
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="portal-audio-player-wrap mb-2">
+                            <label class="form-label" for="audioPlayer">Reproducción</label>
+                            <audio id="audioPlayer" controls class="w-100 portal-audio-player" aria-label="Reproductor de audio del caso seleccionado"></audio>
+                            <p id="audioPlayerHint" class="form-text text-muted mb-0">Sin audio cargado para este caso.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="estudioConsecutivo" value="" />
+    <input type="hidden" id="estudioEmpresa" value="" />
+</section>
+
+<div class="modal fade" id="modalGrabar" tabindex="-1" aria-labelledby="modalGrabarLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5" id="modalGrabarLabel">Grabar audio</h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <p class="small text-muted">Use el micrófono para grabar la lectura del estudio.</p>
+                <div class="d-flex gap-2 mb-3">
+                    <button type="button" class="btn btn-danger" id="btnIniciarGrabacion">Iniciar grabación</button>
+                    <button type="button" class="btn btn-secondary" id="btnDetenerGrabacion" disabled>Detener</button>
+                </div>
+                <p id="estadoGrabacion" class="small mb-2" aria-live="polite">Listo para grabar.</p>
+                <audio id="audioPreview" controls class="w-100" hidden aria-label="Vista previa de grabación"></audio>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" id="btnSubirGrabacion" disabled>Subir grabación</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="antiForgeryForm" method="post" class="d-none">
+    @Html.AntiForgeryToken()
+</form>
+
+@section Scripts {
+    <script src="~/js/portalRadiologos.js" asp-append-version="true"></script>
+}

@@ -1,0 +1,99 @@
+﻿@using System.Security.Claims
+@{
+    ViewData["Title"] = "Inicio";
+    Layout = "_Layout";
+    var userName = ViewBag.DisplayName as string ?? User.GetDisplayName();
+    var userRole = ViewBag.UserRole as string ?? User.FindFirst(ClaimTypes.Role)?.Value ?? "Usuario";
+    var isAdmin = User.IsInRole(RoleNames.Administrador);
+    var isRadiologo = User.IsInRole(RoleNames.Radiologo);
+    var isOperador = User.IsInRole(RoleNames.Operador);
+}
+
+<section class="home-hero mb-4">
+    <div class="home-hero-inner">
+        <p class="home-hero-kicker mb-2">Plataforma Esculapio</p>
+        <h1 class="home-hero-title mb-2">Bienvenido, @userName</h1>
+        <p class="home-hero-subtitle mb-3">
+            Gestión integral de estudios radiológicos, parametrización y portales clínicos.
+        </p>
+        <span class="home-role-badge">Rol: @userRole</span>
+    </div>
+</section>
+
+<section class="home-modules" aria-label="Accesos rápidos">
+    <h2 class="home-section-title h5 mb-3">Accesos rápidos</h2>
+    <div class="row g-3 g-lg-4">
+        @if (isAdmin)
+        {
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Parametros" asp-action="Radiologos">
+                    <span class="home-card-icon" aria-hidden="true">👨‍⚕️</span>
+                    <h3 class="home-card-title">Radiólogos por Empresa</h3>
+                    <p class="home-card-text">Registro de médicos radiólogos y empresas asignadas.</p>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Parametros" asp-action="Operadores">
+                    <span class="home-card-icon" aria-hidden="true">👥</span>
+                    <h3 class="home-card-title">Operadores por Empresa</h3>
+                    <p class="home-card-text">Registro de operadores y empresas asignadas.</p>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Parametros" asp-action="Estudios">
+                    <span class="home-card-icon" aria-hidden="true">⚙</span>
+                    <h3 class="home-card-title">Parametrización de Estudios</h3>
+                    <p class="home-card-text">Dependencia, servicio, cantidad y empresas por estudio.</p>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Condicional" asp-action="Automatizacion">
+                    <span class="home-card-icon" aria-hidden="true">⏱</span>
+                    <h3 class="home-card-title">Automatización Programación</h3>
+                    <p class="home-card-text">Programación diaria vía N8N para radiólogos u operadores.</p>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="PortalRadiologos" asp-action="Index">
+                    <span class="home-card-icon" aria-hidden="true">🩺</span>
+                    <h3 class="home-card-title">Portal Web Radiólogos</h3>
+                    <p class="home-card-text">Programación diaria, diagnósticos, notas médicas y dictado por audio.</p>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Lecturas" asp-action="Index">
+                    <span class="home-card-icon" aria-hidden="true">📋</span>
+                    <h3 class="home-card-title">Portal Web Lecturas</h3>
+                    <p class="home-card-text">Seguimiento y lectura de estudios asignados por operador.</p>
+                </a>
+            </div>
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Reportes" asp-action="Index">
+                    <span class="home-card-icon" aria-hidden="true">📊</span>
+                    <h3 class="home-card-title">Consultas / Reportes</h3>
+                    <p class="home-card-text">Consultas por empresa, radiólogo y rango de fechas.</p>
+                </a>
+            </div>
+        }
+        @if (isRadiologo && !isAdmin)
+        {
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="PortalRadiologos" asp-action="Index">
+                    <span class="home-card-icon" aria-hidden="true">🩺</span>
+                    <h3 class="home-card-title">Portal Web Radiólogos</h3>
+                    <p class="home-card-text">Su espacio de trabajo para estudios del día.</p>
+                </a>
+            </div>
+        }
+        @if (isOperador && !isAdmin)
+        {
+            <div class="col-sm-6 col-lg-4">
+                <a class="home-card" asp-controller="Lecturas" asp-action="Index">
+                    <span class="home-card-icon" aria-hidden="true">📋</span>
+                    <h3 class="home-card-title">Portal Web Lecturas</h3>
+                    <p class="home-card-text">Asignación y seguimiento de estudios pendientes.</p>
+                </a>
+            </div>
+        }
+    </div>
+</section>

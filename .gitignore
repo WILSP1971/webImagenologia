@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.db
+*.mdf
+*.ldf
+TestResults/
+
+# Python / agentic
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.env
+agentic/reports/
+
+# Node (si se usa alguna herramienta de build front)
+node_modules/
+dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cursor
+.cursor/chat/

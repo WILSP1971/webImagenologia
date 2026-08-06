@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webImagenologia-orchestrator"
+version = "1.0.0"
+description = "Orquestador agentico para la plataforma webImagenologia — Esculapio"
+requires-python = ">=3.11"
+dependencies = [
+    "cursor-sdk>=0.1",
+    "pydantic>=2.0",
+    "rich>=13.0",
+    "pyyaml>=6.0",
+    "python-dotenv>=1.0",
+    "httpx>=0.27",
+]
+
+[project.scripts]
+orchestrate = "orchestrator:main"
+
+[tool.setuptools]
+py-modules = ["orchestrator", "notifier", "phases", "bridge_compat"]

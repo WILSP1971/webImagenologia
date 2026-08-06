@@ -1,0 +1,181 @@
+@model WebImagenologia.Web.Models.ViewModels.LecturasViewModel
+@{
+    ViewData["Title"] = "Portal Web Lecturas de Estudios";
+    Layout = "_Layout";
+}
+
+<header class="param-page-header mb-4">
+    <h1 class="h3 mb-0">Portal Web Lecturas de Estudios</h1>
+    <partial name="_BotonRegresar" />
+</header>
+
+@if (ViewData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Filtros de consulta</h2>
+
+        <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+        <form asp-action="Consultar" asp-controller="Lecturas" method="post" novalidate id="formConsultar">
+            @Html.AntiForgeryToken()
+
+            <div class="row g-3 align-items-end">
+                <div class="col-md-3">
+                    <label asp-for="EmpresaSeleccionada" class="form-label"></label>
+                    <select asp-for="EmpresaSeleccionada"
+                            class="form-select"
+                            id="selectEmpresa"
+                            aria-required="true"
+                            data-medicos-url="@Url.Action("MedicosPorEmpresa", "Lecturas")">
+                        <option value="">-- Seleccione empresa --</option>
+                        @foreach (var empresa in Model.EmpresasDisponibles)
+                        {
+                            if (empresa.Codigo == Model.EmpresaSeleccionada)
+                            {
+                                <option value="@empresa.Codigo" selected="selected">@empresa.Nombre (@empresa.Codigo)</option>
+                            }
+                            else
+                            {
+                                <option value="@empresa.Codigo">@empresa.Nombre (@empresa.Codigo)</option>
+                            }
+                        }
+                    </select>
+                    <span asp-validation-for="EmpresaSeleccionada" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="FechaInicial" class="form-label"></label>
+                    <input asp-for="FechaInicial"
+                           class="form-control"
+                           type="date"
+                           aria-required="true" />
+                    <span asp-validation-for="FechaInicial" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="FechaFinal" class="form-label"></label>
+                    <input asp-for="FechaFinal"
+                           class="form-control"
+                           type="date"
+                           aria-required="true" />
+                    <span asp-validation-for="FechaFinal" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label asp-for="CedulaMedicoFiltro" class="form-label"></label>
+                    <select asp-for="CedulaMedicoFiltro"
+                            class="form-select"
+                            id="selectMedico">
+                        <option value="">-- Todos los radiólogos --</option>
+                        @foreach (var medico in Model.MedicosDisponibles)
+                        {
+                            if (medico.Cedula == Model.CedulaMedicoFiltro)
+                            {
+                                <option value="@medico.Cedula" selected="selected">@medico.Nombre (@medico.Cedula)</option>
+                            }
+                            else
+                            {
+                                <option value="@medico.Cedula">@medico.Nombre (@medico.Cedula)</option>
+                            }
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label asp-for="EstadoFiltro" class="form-label"></label>
+                    <select asp-for="EstadoFiltro" class="form-select" aria-required="true">
+                        <option value="TODO">Todos</option>
+                        <option value="PEN">Pendiente</option>
+                        <option value="LEI">Leído</option>
+                    </select>
+                </div>
+
+                <div class="col-md-12">
+                    <button type="submit" class="btn btn-primary">Consultar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Resultados</h2>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-sm align-middle" aria-label="Lecturas de estudios">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col">No. Cuenta</th>
+                        <th scope="col">Servicio</th>
+                        <th scope="col">Médico</th>
+                        <th scope="col">Fecha Programación</th>
+                        <th scope="col">Fecha Asignación</th>
+                        <th scope="col">Estado</th>
+                        <th scope="col">Tiene Audio</th>
+                        <th scope="col">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var lectura in Model.Lecturas)
+                    {
+                        <tr>
+                            <td>@lectura.NoCuenta</td>
+                            <td>@lectura.NombreServicio</td>
+                            <td>@lectura.NombreMedico</td>
+                            <td>@lectura.FechaProgramacion.ToString("dd/MM/yyyy")</td>
+                            <td>@lectura.FechaAsignacion.ToString("dd/MM/yyyy")</td>
+                            <td>@FormatEstado(lectura.Estado)</td>
+                            <td>
+                                @if (lectura.TieneAudio)
+                                {
+                                    <span class="text-success" aria-label="Tiene audio">&#128266;</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted" aria-label="Sin audio">—</span>
+                                }
+                            </td>
+                            <td>
+                                <a class="btn btn-sm btn-outline-primary"
+                                   asp-action="Detalle"
+                                   asp-route-consecutivo="@lectura.Consecutivo"
+                                   asp-route-empresa="@lectura.Empresa"
+                                   aria-label="Ver detalle del estudio @lectura.NoCuenta">
+                                    Ver Detalle
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.Lecturas.Count == 0)
+        {
+            <p class="text-muted mb-0">No hay lecturas para los filtros seleccionados.</p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/lecturas.js" asp-append-version="true"></script>
+}
+
+@functions {
+    private static string FormatEstado(string estado) =>
+        estado.ToUpperInvariant() switch
+        {
+            "PEN" or "PEND" or "PENDIENTE" => "Pendiente",
+            "LEI" or "LEIDO" => "Leído",
+            _ => estado
+        };
+}

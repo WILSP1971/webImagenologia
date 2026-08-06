@@ -1,0 +1,324 @@
+{
+  "name": "ProgramacionEstudiosDiagnosticos",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 24,
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "node-cron-trigger",
+      "name": "Cron - Programacion Diaria",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM estudiosdiagnosticos_automatizacionwf WHERE Estado = 'ACT' LIMIT 1",
+        "options": {}
+      },
+      "id": "node-read-config",
+      "name": "Leer Config Automatizacion",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 2.4,
+      "position": [460, 300],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-esculapio-cred",
+          "name": "MySQL Esculapio"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.Estado }}",
+              "operation": "equal",
+              "value2": "ACT"
+            }
+          ]
+        }
+      },
+      "id": "node-if-activo",
+      "name": "¿Automatización Activa?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL ConsOrdenesResultados('{{ $env.EMPRESA }}', '{{ $now.format(\"yyyy-MM-dd\") }}', '{{ $now.format(\"yyyy-MM-dd\") }}', '{{ $env.LAB_RX_CODE || \"RX\" }}')",
+        "options": {}
+      },
+      "id": "node-sp-ordenes",
+      "name": "Obtener Estudios Sin Resultado",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 2.4,
+      "position": [900, 200],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-esculapio-cred",
+          "name": "MySQL Esculapio"
+        }
+      },
+      "notes": "Invoca ConsOrdenesResultados para poblar estudiosdiagnosticos_sinresultado."
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CALL Get_ProgramacionEstudiosDiagnosticos()",
+        "options": {}
+      },
+      "id": "node-sp-programar",
+      "name": "Programar Estudios a Radiologos",
+      "type": "n8n-nodes-base.mysql",
+      "typeVersion": 2.4,
+      "position": [1120, 200],
+      "credentials": {
+        "mySql": {
+          "id": "mysql-esculapio-cred",
+          "name": "MySQL Esculapio"
+        }
+      },
+      "notes": "Distribuye estudios entre radiólogos e inserta en estudiosdiagnosticos_programacion."
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.WEB_CALLBACK_URL }}/Condicional/Automatizacion/NotificarEjecucion",
+        "method": "POST",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"fecha\": \"{{ $now.format('yyyy-MM-dd') }}\",\n  \"estudios\": {{ $json.TotalProgramados ?? 0 }},\n  \"status\": \"OK\"\n}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "node-notify-web",
+      "name": "Notificar Resultado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 200],
+      "continueOnFail": true,
+      "notes": "Notificación opcional al servidor web. continueOnFail=true evita detener el workflow."
+    },
+    {
+      "parameters": {},
+      "id": "node-inactivo",
+      "name": "Sin Ejecucion - Inactivo",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 420],
+      "notes": "Rama False del IF — automatización inactiva en estudiosdiagnosticos_automatizacionwf."
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "actualizar-schedule",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "node-webhook-schedule",
+      "name": "Webhook - Actualizar Schedule",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 560],
+      "webhookId": "actualizar-schedule",
+      "notes": "Recibe POST desde web (Fase 07): { frecuencia, hora, activo, tipoProgramacion }"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-frecuencia",
+              "name": "frecuencia",
+              "value": "={{ $json.body.frecuencia || $json.frecuencia || 'DIA' }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-hora",
+              "name": "hora",
+              "value": "={{ $json.body.hora || $json.hora || '06:00' }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-activo",
+              "name": "activo",
+              "value": "={{ $json.body.activo ?? $json.activo ?? true }}",
+              "type": "boolean"
+            },
+            {
+              "id": "assign-tipo",
+              "name": "tipoProgramacion",
+              "value": "={{ $json.body.tipoProgramacion || $json.tipoProgramacion || 'RAD' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-set-schedule",
+      "name": "Parsear Payload Schedule",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 560]
+    },
+    {
+      "parameters": {
+        "jsCode": "const staticData = $getWorkflowStaticData('global');\nconst item = $input.first().json;\n\nstaticData.frecuencia = item.frecuencia;\nstaticData.hora = item.hora;\nstaticData.activo = item.activo;\nstaticData.tipoProgramacion = item.tipoProgramacion;\nstaticData.updatedAt = new Date().toISOString();\n\nreturn [{\n  json: {\n    success: true,\n    message: item.activo\n      ? `Schedule actualizado: ${item.frecuencia} a las ${item.hora}`\n      : 'Automatización desactivada en N8N',\n    frecuencia: item.frecuencia,\n    hora: item.hora,\n    activo: item.activo,\n    tipoProgramacion: item.tipoProgramacion\n  }\n}];"
+      },
+      "id": "node-code-schedule",
+      "name": "Guardar Schedule en StaticData",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [680, 560]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": {}
+      },
+      "id": "node-respond-webhook",
+      "name": "Responder Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [900, 560]
+    }
+  ],
+  "connections": {
+    "Cron - Programacion Diaria": {
+      "main": [
+        [
+          {
+            "node": "Leer Config Automatizacion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Config Automatizacion": {
+      "main": [
+        [
+          {
+            "node": "¿Automatización Activa?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "¿Automatización Activa?": {
+      "main": [
+        [
+          {
+            "node": "Obtener Estudios Sin Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Sin Ejecucion - Inactivo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Estudios Sin Resultado": {
+      "main": [
+        [
+          {
+            "node": "Programar Estudios a Radiologos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Programar Estudios a Radiologos": {
+      "main": [
+        [
+          {
+            "node": "Notificar Resultado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook - Actualizar Schedule": {
+      "main": [
+        [
+          {
+            "node": "Parsear Payload Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parsear Payload Schedule": {
+      "main": [
+        [
+          {
+            "node": "Guardar Schedule en StaticData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar Schedule en StaticData": {
+      "main": [
+        [
+          {
+            "node": "Responder Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "esculapio"
+    },
+    {
+      "name": "imagenologia"
+    },
+    {
+      "name": "programacion-estudios"
+    }
+  ],
+  "triggerCount": 2,
+  "updatedAt": "2026-05-24T14:00:00.000Z",
+  "id": "wf-programacion-estudios-v1",
+  "meta": {
+    "instanceId": "n8n-esculapiosis",
+    "description": "Distribuye automáticamente estudios radiológicos sin resultado entre radiólogos parametrizados. Trigger cron diario + webhook para actualizar schedule desde el web.",
+    "notes": "Variables N8N: EMPRESA, LAB_RX_CODE, WEB_CALLBACK_URL. Credencial MySQL: 'MySQL Esculapio'. Webhook path: actualizar-schedule (POST)."
+  }
+}

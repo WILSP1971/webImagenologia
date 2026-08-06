@@ -1,0 +1,21 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = crlf
+indent_style = space
+indent_size = 4
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+[*.{cs,csproj,sln}]
+indent_size = 4
+
+[*.{cshtml,html,css,js,json,md,yml,yaml}]
+indent_size = 2
+
+[*.{sql}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab

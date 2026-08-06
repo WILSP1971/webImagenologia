@@ -1,0 +1,85 @@
+@model WebImagenologia.Web.Models.ViewModels.OperadoresViewModel
+@{
+    ViewData["Title"] = "Editar operador";
+    Layout = "_Layout";
+}
+
+<header class="param-page-header mb-4">
+    <div>
+        <p class="param-page-kicker mb-1">Parámetros</p>
+        <h1 class="h3 mb-0">Editar operador</h1>
+    </div>
+    <a asp-action="Operadores" class="btn btn-outline-secondary btn-regresar" aria-label="Volver a operadores">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" class="me-1">
+            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 1-.5.5H2.707l3.147 3.146a.5.5 0 0 1-.708.708l-4-4a.5.5 0 0 1 0-.708l4-4a.5.5 0 1 1 .708.708L2.707 7.5H14.5A.5.5 0 0 1 15 8z"/>
+        </svg>
+        Regresar
+    </a>
+</header>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                <form asp-action="RegistrarOperador" asp-controller="Parametros" method="post" novalidate id="formOperador">
+                    <input type="hidden" asp-for="ModoEdicion" />
+
+                    <div class="mb-3">
+                        <label asp-for="CedulaOperador" class="form-label"></label>
+                        <input asp-for="CedulaOperador"
+                               class="form-control"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreOperador" class="form-label"></label>
+                        <input asp-for="NombreOperador"
+                               class="form-control"
+                               id="nombreOperador"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="UsuarioEsculapio" class="form-label"></label>
+                        <input asp-for="UsuarioEsculapio"
+                               class="form-control"
+                               autocomplete="off"
+                               aria-required="true" />
+                        <span asp-validation-for="UsuarioEsculapio" class="text-danger"></span>
+                    </div>
+
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6 mb-2">@Html.DisplayNameFor(m => m.EmpresasSeleccionadas)</legend>
+                        <div class="empresas-check-group" role="group" aria-label="Empresas disponibles">
+                            @foreach (var empresa in Model.EmpresasDisponibles)
+                            {
+                                var inputId = $"empresa_{empresa.Codigo}";
+                                <div class="form-check">
+                                    <input class="form-check-input empresa-checkbox"
+                                           type="checkbox"
+                                           name="EmpresasSeleccionadas"
+                                           value="@empresa.Codigo"
+                                           id="@inputId"
+                                           @(Model.EmpresasSeleccionadas.Contains(empresa.Codigo) ? "checked" : null) />
+                                    <label class="form-check-label" for="@inputId">@empresa.Nombre</label>
+                                </div>
+                            }
+                        </div>
+                        <span asp-validation-for="EmpresasSeleccionadas" class="text-danger"></span>
+                    </fieldset>
+
+                    <button type="submit" class="btn btn-primary w-100">Guardar cambios</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/parametros-operadores.js" asp-append-version="true"></script>
+}

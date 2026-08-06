@@ -1,0 +1,201 @@
+@model WebImagenologia.Web.Models.ViewModels.LecturasDetalleViewModel
+@{
+    ViewData["Title"] = "Detalle de Lectura";
+    Layout = "_Layout";
+    var lectura = Model.Lectura;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">Detalle de Lectura</h1>
+    <a class="btn btn-outline-secondary btn-sm"
+       asp-action="Index"
+       asp-controller="Lecturas">
+        Volver al listado
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-body">
+        <h2 class="h5 mb-3">Información del Estudio</h2>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-3">
+                <label for="detalleNoCuenta" class="form-label">No. Cuenta</label>
+                <input type="text"
+                       id="detalleNoCuenta"
+                       class="form-control"
+                       value="@lectura.NoCuenta"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleServicio" class="form-label">Servicio</label>
+                <input type="text"
+                       id="detalleServicio"
+                       class="form-control"
+                       value="@lectura.NombreServicio"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleMedico" class="form-label">Médico</label>
+                <input type="text"
+                       id="detalleMedico"
+                       class="form-control"
+                       value="@lectura.NombreMedico"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleEstado" class="form-label">Estado</label>
+                <input type="text"
+                       id="detalleEstado"
+                       class="form-control"
+                       value="@FormatEstado(lectura.Estado)"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleFechaProgramacion" class="form-label">Fecha Programación</label>
+                <input type="text"
+                       id="detalleFechaProgramacion"
+                       class="form-control"
+                       value="@lectura.FechaProgramacion.ToString("dd/MM/yyyy")"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleFechaAsignacion" class="form-label">Fecha Asignación</label>
+                <input type="text"
+                       id="detalleFechaAsignacion"
+                       class="form-control"
+                       value="@lectura.FechaAsignacion.ToString("dd/MM/yyyy")"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleEmpresa" class="form-label">Empresa</label>
+                <input type="text"
+                       id="detalleEmpresa"
+                       class="form-control"
+                       value="@lectura.Empresa"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+            <div class="col-md-3">
+                <label for="detalleConsecutivo" class="form-label">Consecutivo</label>
+                <input type="text"
+                       id="detalleConsecutivo"
+                       class="form-control"
+                       value="@lectura.Consecutivo"
+                       readonly
+                       aria-readonly="true" />
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs mb-3" id="tabsDetalle" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active"
+                        id="tab-diagnosticos-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tabDiagnosticos"
+                        type="button"
+                        role="tab"
+                        aria-controls="tabDiagnosticos"
+                        aria-selected="true">
+                    Diagnóstico
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link"
+                        id="tab-notas-btn"
+                        data-bs-toggle="tab"
+                        data-bs-target="#tabNotas"
+                        type="button"
+                        role="tab"
+                        aria-controls="tabNotas"
+                        aria-selected="false">
+                    Notas Médicas
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content mb-4" id="tabsDetalleContent">
+            <div class="tab-pane fade show active"
+                 id="tabDiagnosticos"
+                 role="tabpanel"
+                 aria-labelledby="tab-diagnosticos-btn">
+                @if (Model.Diagnosticos.Count == 0)
+                {
+                    <p class="text-muted mb-0">No hay diagnósticos registrados para esta cuenta.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var diagnostico in Model.Diagnosticos)
+                        {
+                            <li class="list-group-item px-0">
+                                @(string.IsNullOrWhiteSpace(diagnostico.Descripcion)
+                                    ? "Sin descripción"
+                                    : diagnostico.Descripcion)
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+            <div class="tab-pane fade"
+                 id="tabNotas"
+                 role="tabpanel"
+                 aria-labelledby="tab-notas-btn">
+                @if (Model.NotasMedicas.Count == 0)
+                {
+                    <p class="text-muted mb-0">No hay notas médicas registradas para esta cuenta.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var nota in Model.NotasMedicas)
+                        {
+                            <li class="list-group-item px-0">
+                                @if (nota.Fecha.HasValue)
+                                {
+                                    <div class="small text-muted mb-1">@nota.Fecha.Value.ToString("dd/MM/yyyy")</div>
+                                }
+                                @(string.IsNullOrWhiteSpace(nota.Nota)
+                                    ? "Sin descripción"
+                                    : nota.Nota)
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        @if (Model.TieneAudio)
+        {
+            <div class="border rounded p-3 bg-light">
+                <h3 class="h6 mb-3">Audio del Radiólogo</h3>
+                <audio id="audioPlayer"
+                       controls
+                       class="w-100"
+                       aria-label="Reproductor de audio del radiólogo"
+                       src="@Url.Action("ObtenerAudio", "Lecturas", new { consecutivo = lectura.Consecutivo, empresa = lectura.Empresa })">
+                </audio>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted mb-0">Este estudio no tiene audio registrado.</p>
+        }
+    </div>
+</div>
+
+@functions {
+    private static string FormatEstado(string estado) =>
+        estado.ToUpperInvariant() switch
+        {
+            "PEN" or "PEND" or "PENDIENTE" => "Pendiente",
+            "LEI" or "LEIDO" => "Leído",
+            _ => estado
+        };
+}

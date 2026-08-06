@@ -1,0 +1,58 @@
+---
+description: Convenciones de UI — Razor Views, Bootstrap 5, JS vanilla
+globs:
+  - "**/*.cshtml"
+  - "src/**/wwwroot/**"
+---
+
+# Convenciones Frontend — Bootstrap 5 + Razor
+
+## Razor Views (.cshtml)
+- Cada vista debe tener un ViewModel tipado (`@model MiViewModel`)
+- Prohibido `await` o lógica de negocio dentro de bloques `@{ }`
+- Usar Tag Helpers de ASP.NET Core (`asp-for`, `asp-action`, `asp-controller`)
+- Usar `@Html.DisplayNameFor` / `@Html.DisplayFor` para grids
+- Layout base: `Views/Shared/_Layout.cshtml` con Bootstrap 5 CDN + navbar
+
+## Bootstrap 5
+- Usar clases utilitarias de Bootstrap 5 (no escribir CSS custom salvo en `wwwroot/css/site.css`)
+- Grid: sistema de 12 columnas `col-md-*`
+- Formularios: `form-control`, `form-select`, `form-check`
+- Grids de datos: `table table-striped table-hover table-sm`
+- Botones: `btn btn-primary`, `btn btn-danger`, `btn btn-outline-secondary`
+- Modales Bootstrap para confirmación de eliminar
+- Alertas: `alert alert-success`, `alert alert-danger` para mensajes de feedback
+
+## JavaScript
+- Vanilla JS + `fetch` API — sin jQuery pesado (jQuery solo si lo requiere Bootstrap)
+- Un archivo JS por módulo en `wwwroot/js/<modulo>.js`
+- Funciones nombradas (no arrow functions sueltas en el global scope)
+- AJAX para grids: `fetch('/api/ruta').then(r => r.json())`
+- Manejo de errores en todos los `fetch`: bloque `.catch`
+
+## Accesibilidad
+- Todo `<input>` debe tener un `<label>` asociado (`for` + `id`)
+- Agregar `aria-label` cuando el label no es visible
+- Botones con solo ícono: agregar `title` y `aria-label`
+- Imágenes: siempre `alt`
+
+## Multicheckbox de Empresas (patrón reutilizable)
+```html
+<div class="empresas-check-group">
+  @foreach (var emp in Model.EmpresasDisponibles)
+  {
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="checkbox"
+             name="EmpresasSeleccionadas" value="@emp.Codigo"
+             id="emp_@emp.Codigo"
+             @(Model.EmpresasSeleccionadas.Contains(emp.Codigo) ? "checked" : "") />
+      <label class="form-check-label" for="emp_@emp.Codigo">@emp.Nombre</label>
+    </div>
+  }
+</div>
+```
+
+## Grids de datos (patrón reutilizable)
+- Tabla HTML con encabezados `<th scope="col">`
+- Columna de acciones al final: botón Editar (`btn-warning btn-sm`) + Eliminar (`btn-danger btn-sm`)
+- Eliminar siempre con confirmación modal Bootstrap antes de llamar al endpoint DELETE

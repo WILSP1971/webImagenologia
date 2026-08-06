@@ -1,0 +1,181 @@
+@model WebImagenologia.Web.Models.ViewModels.AutomatizacionViewModel
+@{
+    ViewData["Title"] = "Automatización Programación de Estudios";
+    Layout = "_Layout";
+    var tipoRadiologos = string.Equals(Model.TipoProgramacion, "RAD", StringComparison.OrdinalIgnoreCase);
+    var tipoOperador = string.Equals(Model.TipoProgramacion, "OPE", StringComparison.OrdinalIgnoreCase);
+}
+
+<section class="param-page">
+    <header class="param-page-header mb-4">
+        <div>
+            <p class="param-page-kicker mb-1">Parámetros</p>
+            <h1 class="param-page-title h3 mb-0">Automatización Programación de Estudios</h1>
+        </div>
+        <partial name="_BotonRegresar" />
+    </header>
+
+    <div class="alert alert-info param-page-hint mb-4" role="note">
+        La distribución automática se ejecuta en <strong>N8N</strong> (n8n.esculapiosis.com) invocando los procedimientos
+        <code>ConsOrdenesResultados</code> y <code>Get_ProgramacionEstudiosDiagnosticos</code> según la programación definida aquí.
+    </div>
+
+    @if (ViewData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="status">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    @if (ViewData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="param-card">
+                <h2 class="param-card-title h5">Configurar programación</h2>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                <form asp-action="RegistrarAutomatizacion" asp-controller="Condicional" method="post" novalidate id="formAutomatizacion">
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6 fw-semibold mb-2">Programación</legend>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input tipo-programacion-check"
+                                   type="checkbox"
+                                   id="chkRadiologos"
+                                   value="RAD"
+                                   @(tipoRadiologos ? "checked" : null)
+                                   aria-label="Programación para radiólogos" />
+                            <label class="form-check-label" for="chkRadiologos">Radiólogos</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input tipo-programacion-check"
+                                   type="checkbox"
+                                   id="chkOperador"
+                                   value="OPE"
+                                   @(tipoOperador ? "checked" : null)
+                                   aria-label="Programación para operador" />
+                            <label class="form-check-label" for="chkOperador">Operador</label>
+                        </div>
+                        <input type="hidden" asp-for="TipoProgramacion" id="tipoProgramacionHidden" />
+                        <span asp-validation-for="TipoProgramacion" class="text-danger"></span>
+                    </fieldset>
+
+                    <div class="mb-3">
+                        <label asp-for="Frecuencia" class="form-label"></label>
+                        <select asp-for="Frecuencia" class="form-select" id="selectFrecuencia" aria-required="true">
+                            <option value="DIA">Diario</option>
+                        </select>
+                        <span asp-validation-for="Frecuencia" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="HoraAutomatizacion" class="form-label">Hora inicio (HH:mm)</label>
+                        <input asp-for="HoraAutomatizacion"
+                               class="form-control"
+                               type="time"
+                               id="horaAutomatizacion"
+                               aria-required="true" />
+                        <span asp-validation-for="HoraAutomatizacion" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3 form-check">
+                        <input asp-for="Activo"
+                               class="form-check-input"
+                               type="checkbox"
+                               id="checkActivo"
+                               checked
+                               role="switch" />
+                        <label asp-for="Activo" class="form-check-label" for="checkActivo">Activo al registrar</label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="param-card param-card-table">
+                <h2 class="param-card-title h5">Programación definida</h2>
+
+                @if (Model.AutomatizacionesRegistradas.Count == 0)
+                {
+                    <p class="text-muted mb-0" role="status">No hay automatizaciones registradas.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 param-table" aria-label="Automatizaciones registradas" id="tablaAutomatizaciones">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Programación</th>
+                                    <th scope="col">Frecuencia</th>
+                                    <th scope="col">Hora inicio</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col" class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var automatizacion in Model.AutomatizacionesRegistradas)
+                                {
+                                    var tipoLabel = automatizacion.TipoProgramacion.Equals("OPE", StringComparison.OrdinalIgnoreCase)
+                                        ? "Operador"
+                                        : "Radiólogos";
+                                    var frecuenciaLabel = automatizacion.Frecuencia.Equals("DIA", StringComparison.OrdinalIgnoreCase)
+                                        ? "Diario"
+                                        : automatizacion.Frecuencia;
+                                    var estaActivo = automatizacion.Estado.Equals("ACT", StringComparison.OrdinalIgnoreCase);
+                                    var estadoLabel = estaActivo ? "Activo" : "Inactivo";
+                                    var toggleId = $"toggleEstado-{automatizacion.IdAutomatizacion}";
+                                    <tr>
+                                        <td>@tipoLabel</td>
+                                        <td>@frecuenciaLabel</td>
+                                        <td>@automatizacion.HoraAutomatizacion</td>
+                                        <td>
+                                            <span class="badge @(estaActivo ? "text-bg-success" : "text-bg-secondary")">@estadoLabel</span>
+                                        </td>
+                                        <td class="text-end">
+                                            <form asp-action="ToggleEstadoAutomatizacion"
+                                                  asp-controller="Condicional"
+                                                  method="post"
+                                                  class="d-inline toggle-estado-form">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="idAutomatizacion" value="@automatizacion.IdAutomatizacion" />
+                                                <input type="hidden" name="frecuencia" value="@automatizacion.Frecuencia" />
+                                                <input type="hidden" name="horaAutomatizacion" value="@automatizacion.HoraAutomatizacion" />
+                                                <input type="hidden" name="tipoProgramacion" value="@automatizacion.TipoProgramacion" />
+                                                <div class="form-check form-switch d-inline-block">
+                                                    <input class="form-check-input btn-toggle-estado"
+                                                           type="checkbox"
+                                                           role="switch"
+                                                           id="@toggleId"
+                                                           name="activo"
+                                                           value="true"
+                                                           checked="@estaActivo"
+                                                           aria-label="Activar o desactivar automatización @tipoLabel" />
+                                                    <label class="form-check-label visually-hidden" for="@toggleId">@estadoLabel</label>
+                                                </div>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/condicional-automatizacion.js" asp-append-version="true"></script>
+}

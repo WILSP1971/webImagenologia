@@ -1,0 +1,187 @@
+@model WebImagenologia.Web.Models.ViewModels.OperadoresViewModel
+@{
+    ViewData["Title"] = "Operadores por Empresa";
+    Layout = "_Layout";
+}
+
+<section class="param-page">
+    <header class="param-page-header mb-4">
+        <div>
+            <p class="param-page-kicker mb-1">Parámetros</p>
+            <h1 class="param-page-title h3 mb-0">Operadores por Empresa</h1>
+        </div>
+        <partial name="_BotonRegresar" />
+    </header>
+
+    @if (ViewData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="status">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    @if (ViewData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="param-card">
+                <h2 class="param-card-title h5">Registrar operador</h2>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                <form asp-action="RegistrarOperador" asp-controller="Parametros" method="post" novalidate id="formOperador">
+                    <div class="mb-3">
+                        <label asp-for="CedulaOperador" class="form-label">Operador / funcionario</label>
+                        <select asp-for="CedulaOperador"
+                                class="form-select"
+                                id="selectOperador"
+                                aria-required="true"
+                                data-operador-target="nombreOperador">
+                            <option value="">-- Seleccione operador --</option>
+                            @foreach (var operador in Model.OperadoresDisponibles)
+                            {
+                                <option value="@operador.Cedula" data-nombre="@operador.Nombre">@operador.Nombre (@operador.Cedula)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CedulaOperador" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="UsuarioEsculapio" class="form-label"></label>
+                        <input asp-for="UsuarioEsculapio"
+                               class="form-control"
+                               autocomplete="username"
+                               aria-required="true"
+                               placeholder="Digite usuario Esculapio" />
+                        <span asp-validation-for="UsuarioEsculapio" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreOperador" class="form-label"></label>
+                        <input asp-for="NombreOperador"
+                               class="form-control"
+                               id="nombreOperador"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6 mb-2">@Html.DisplayNameFor(m => m.EmpresasSeleccionadas)</legend>
+                        <div class="empresas-check-group" role="group" aria-label="Empresas asignadas al usuario">
+                            @if (Model.EmpresasDisponibles.Count == 0)
+                            {
+                                <p class="text-muted small mb-0">No hay empresas asignadas en su sesión.</p>
+                            }
+                            else
+                            {
+                                @foreach (var empresa in Model.EmpresasDisponibles)
+                                {
+                                    var inputId = $"empresa_{empresa.Codigo}";
+                                    <div class="form-check">
+                                        <input class="form-check-input empresa-checkbox"
+                                               type="checkbox"
+                                               name="EmpresasSeleccionadas"
+                                               value="@empresa.Codigo"
+                                               id="@inputId"
+                                               @(Model.EmpresasSeleccionadas.Contains(empresa.Codigo) ? "checked" : null) />
+                                        <label class="form-check-label" for="@inputId">@empresa.Nombre</label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <span asp-validation-for="EmpresasSeleccionadas" class="text-danger"></span>
+                    </fieldset>
+
+                    <button type="submit" class="btn btn-primary w-100">Agregar / Registrar</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="param-card param-card-table">
+                <h2 class="param-card-title h5">Operadores registrados</h2>
+
+                @if (Model.OperadoresRegistrados.Count == 0)
+                {
+                    <p class="text-muted mb-0" role="status">No hay operadores registrados.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 param-table" aria-label="Operadores registrados">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Cédula</th>
+                                    <th scope="col">Nombre</th>
+                                    <th scope="col">Usuario Esculapio</th>
+                                    <th scope="col">Empresas</th>
+                                    <th scope="col" class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var operador in Model.OperadoresRegistrados)
+                                {
+                                    <tr>
+                                        <td>@operador.CedulaOperador</td>
+                                        <td>@operador.NombreOperador</td>
+                                        <td>@operador.UsuarioEsculapio</td>
+                                        <td>@string.Join(", ", operador.Empresas)</td>
+                                        <td class="text-end text-nowrap">
+                                            <a class="btn btn-sm btn-outline-primary"
+                                               asp-action="EditarOperador"
+                                               asp-route-cedula="@operador.CedulaOperador"
+                                               aria-label="Editar operador @operador.NombreOperador">
+                                                Editar
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger btn-eliminar-operador"
+                                                    data-cedula="@operador.CedulaOperador"
+                                                    data-nombre="@operador.NombreOperador"
+                                                    aria-label="Eliminar operador @operador.NombreOperador">
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="modal fade" id="modalEliminarOperador" tabindex="-1" aria-labelledby="modalEliminarOperadorLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EliminarOperador" asp-controller="Parametros" method="post" id="formEliminarOperador">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="cedula" id="cedulaEliminar" value="" />
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="modalEliminarOperadorLabel">Confirmar eliminación</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="mensajeEliminarOperador" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/parametros-operadores.js" asp-append-version="true"></script>
+}

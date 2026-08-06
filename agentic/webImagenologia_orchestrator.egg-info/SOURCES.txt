@@ -1,0 +1,10 @@
+notifier.py
+orchestrator.py
+phases.py
+pyproject.toml
+webImagenologia_orchestrator.egg-info/PKG-INFO
+webImagenologia_orchestrator.egg-info/SOURCES.txt
+webImagenologia_orchestrator.egg-info/dependency_links.txt
+webImagenologia_orchestrator.egg-info/entry_points.txt
+webImagenologia_orchestrator.egg-info/requires.txt
+webImagenologia_orchestrator.egg-info/top_level.txt

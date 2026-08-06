@@ -1,0 +1,53 @@
+---
+description: Convenciones de código C# / .NET 8 para el proyecto webImagenologia
+globs:
+  - "**/*.cs"
+  - "**/*.csproj"
+  - "**/*.sln"
+---
+
+# Convenciones .NET 8 / C#
+
+## Configuración de proyecto
+```xml
+<Nullable>enable</Nullable>
+<ImplicitUsings>enable</ImplicitUsings>
+<TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+<LangVersion>latest</LangVersion>
+```
+
+## Nomenclatura
+- Clases, métodos, propiedades: `PascalCase`
+- Parámetros, variables locales: `camelCase`
+- Campos privados: `_camelCase`
+- Interfaces: prefijo `I` → `IEsculapioApiClient`
+- Constantes: `UPPER_SNAKE_CASE`
+- Nombres de código en **inglés**; textos de UI y comentarios en **español**
+
+## DTOs y modelos
+- Usar `record` para DTOs de API (inmutables, JSON-deserializable)
+- Usar `class` para ViewModels (mutables, usados en Razor)
+- Nunca usar tipos dinámicos (`dynamic`, `JObject`, `ExpandoObject`)
+
+## Async / await
+- Todo método que llame a la API externa debe ser `async Task<T>`
+- Nunca usar `.Result` ni `.Wait()` en código async
+- Siempre pasar `CancellationToken` cuando la firma lo permita
+
+## Inyección de dependencias
+- Solo inyección por constructor
+- Registrar servicios en `Program.cs` con el lifetime correcto:
+  - `HttpClient` tipado → `AddHttpClient<IEsculapioApiClient, EsculapioApiClient>()`
+  - Session service → `AddScoped`
+- Prohibido `ServiceLocator` / `IServiceProvider` fuera de `Program.cs`
+
+## Manejo de errores
+- Usar `ILogger<T>` para logging; nunca `Console.Write`
+- Wrap de llamadas API en try/catch con `ApiException` tipada
+- Retornar `Problem()` desde controllers en caso de error 5xx
+
+## Prohibiciones
+- Sin `static` mutable (campos estáticos con estado)
+- Sin `Thread.Sleep` (usar `Task.Delay`)
+- Sin conexión directa a MySQL (toda data vía `IEsculapioApiClient`)
+- Sin SQL inline en ningún archivo .cs

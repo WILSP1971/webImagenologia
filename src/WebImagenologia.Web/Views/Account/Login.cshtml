@@ -1,0 +1,80 @@
+@model WebImagenologia.Web.Models.ViewModels.LoginViewModel
+@using WebImagenologia.Web.Models.Domain
+@{
+    ViewData["Title"] = "Acceso";
+    Layout = "_LayoutLogin";
+}
+
+<div class="login-shell">
+    <aside class="login-brand-panel" aria-hidden="false">
+        <div class="login-brand-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="">
+                <path d="M12 2a4 4 0 0 1 4 4v1h1a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V10a3 3 0 0 1 3-3h1V6a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v1h4V6a2 2 0 0 0-2-2zM8 9a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1v-9a1 1 0 0 0-1-1H8z"/>
+            </svg>
+        </div>
+        <h1 class="login-brand-title">Imagenología Esculapio</h1>
+        <p class="login-brand-subtitle mb-0">
+            Plataforma de gestión de estudios radiológicos. Acceso seguro según su perfil:
+            administrador, radiólogo u operador.
+        </p>
+    </aside>
+
+    <section class="login-form-panel">
+        <h2 class="login-form-heading">Iniciar sesión</h2>
+        <p class="login-form-lead">Ingrese sus credenciales y seleccione el servidor de conexión.</p>
+
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div asp-validation-summary="ModelOnly" class="login-alert" role="alert"></div>
+        }
+
+        <form id="loginForm"
+              asp-action="Login"
+              asp-controller="Account"
+              method="post"
+              novalidate>
+            <div class="login-field">
+                <label asp-for="Usuario" class="form-label"></label>
+                <input asp-for="Usuario"
+                       class="form-control"
+                       autocomplete="username"
+                       placeholder="Usuario Esculapio"
+                       aria-required="true" />
+                <span asp-validation-for="Usuario" class="text-danger small"></span>
+            </div>
+
+            <div class="login-field">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password"
+                       class="form-control"
+                       autocomplete="current-password"
+                       placeholder="••••••••"
+                       aria-required="true" />
+                <span asp-validation-for="Password" class="text-danger small"></span>
+            </div>
+
+            <div class="login-field">
+                <label asp-for="ServidorSeleccionado" class="form-label"></label>
+                <select asp-for="ServidorSeleccionado" class="form-select" aria-required="true">
+                    <option value="">— Seleccione servidor —</option>
+                    @foreach (var servidor in Model.Servidores)
+                    {
+                        <option value="@ServidorSelection.BuildKey(servidor)">@servidor.Descripcion</option>
+                    }
+                </select>
+                <span asp-validation-for="ServidorSeleccionado" class="text-danger small"></span>
+            </div>
+
+            <button type="submit" class="login-submit btn">
+                Acceder
+            </button>
+        </form>
+
+        <p class="login-footer-note mb-0">&copy; @DateTime.Now.Year Esculapio — Imagenología</p>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/account.js" asp-append-version="true"></script>
+}

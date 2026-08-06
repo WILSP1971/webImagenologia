@@ -1,0 +1,266 @@
+@model WebImagenologia.Web.Models.ViewModels.AsignacionViewModel
+@{
+    ViewData["Title"] = "Asignación de Estudios por Empresa";
+    Layout = "_Layout";
+}
+
+<section class="param-page">
+<header class="param-page-header mb-4">
+    <div>
+        <p class="param-page-kicker mb-1">Parámetros</p>
+        <h1 class="param-page-title h3 mb-0">Asignación de Estudios por Empresa</h1>
+    </div>
+    <partial name="_BotonRegresar" />
+</header>
+
+@if (ViewData["SuccessMessage"] is string successMessage)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="status">
+        @successMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+@if (ViewData["ErrorMessage"] is string errorMessage)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @errorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Registrar asignación</h2>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                <form asp-action="RegistrarAsignacion" asp-controller="Condicional" method="post" novalidate id="formAsignacion">
+                    <div class="mb-3">
+                        <label asp-for="Empresa" class="form-label"></label>
+                        <select asp-for="Empresa"
+                                class="form-select"
+                                id="selectEmpresa"
+                                aria-required="true"
+                                data-medicos-url="@Url.Action("MedicosPorEmpresa", "Condicional")"
+                                data-dependencias-url="@Url.Action("DependenciasPorEmpresa", "Condicional")">
+                            <option value="">-- Seleccione empresa --</option>
+                            @foreach (var empresa in Model.EmpresasDisponibles)
+                            {
+                                <option value="@empresa.Codigo">@empresa.Nombre (@empresa.Codigo)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Empresa" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CedulaMedico" class="form-label"></label>
+                        <select asp-for="CedulaMedico"
+                                class="form-select"
+                                id="selectMedico"
+                                aria-required="true"
+                                data-medico-target="nombreMedico">
+                            <option value="">-- Seleccione médico --</option>
+                            @foreach (var medico in Model.MedicosDisponibles)
+                            {
+                                <option value="@medico.Cedula" data-nombre="@medico.Nombre">
+                                    @medico.Nombre (@medico.Cedula)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="CedulaMedico" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreMedico" class="form-label"></label>
+                        <input asp-for="NombreMedico"
+                               class="form-control"
+                               id="nombreMedico"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CodDependencia" class="form-label"></label>
+                        <select asp-for="CodDependencia"
+                                class="form-select"
+                                id="selectDependencia"
+                                aria-required="true"
+                                data-dependencia-target="nombreDependencia">
+                            <option value="">-- Seleccione dependencia --</option>
+                            @foreach (var dependencia in Model.DependenciasDisponibles)
+                            {
+                                <option value="@dependencia.CodDependencia"
+                                        data-nombre="@dependencia.NombreDependencia">
+                                    @dependencia.NombreDependencia (@dependencia.CodDependencia)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="CodDependencia" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreDependencia" class="form-label"></label>
+                        <input asp-for="NombreDependencia"
+                               class="form-control"
+                               id="nombreDependencia"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CodServicio" class="form-label"></label>
+                        <select asp-for="CodServicio"
+                                class="form-select"
+                                id="selectServicio"
+                                aria-required="true"
+                                data-servicio-target="nombreServicio"
+                                data-servicios-url="@Url.Action("ServiciosPorDependencia", "Condicional")">
+                            <option value="">-- Seleccione servicio --</option>
+                            @foreach (var servicio in Model.ServiciosDisponibles)
+                            {
+                                <option value="@servicio.CodServicio"
+                                        data-nombre="@servicio.NombreServicio">
+                                    @servicio.NombreServicio (@servicio.CodServicio)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="CodServicio" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreServicio" class="form-label"></label>
+                        <input asp-for="NombreServicio"
+                               class="form-control"
+                               id="nombreServicio"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Cantidad" class="form-label"></label>
+                        <input asp-for="Cantidad"
+                               class="form-control"
+                               type="number"
+                               min="1"
+                               step="1"
+                               aria-required="true" />
+                        <span asp-validation-for="Cantidad" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Estado" class="form-label"></label>
+                        <select asp-for="Estado" class="form-select" id="selectEstado" aria-required="true">
+                            <option value="ACT">Activo</option>
+                            <option value="INA">Inactivo</option>
+                        </select>
+                        <span asp-validation-for="Estado" class="text-danger"></span>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Registrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Asignaciones registradas</h2>
+
+                @if (Model.AsignacionesRegistradas.Count == 0)
+                {
+                    <p class="text-muted mb-0" role="status">No hay asignaciones registradas.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle mb-0" aria-label="Asignaciones registradas" id="tablaAsignaciones">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Empresa</th>
+                                    <th scope="col">Médico</th>
+                                    <th scope="col">Dependencia</th>
+                                    <th scope="col">Servicio</th>
+                                    <th scope="col">Cantidad</th>
+                                    <th scope="col">Estado</th>
+                                    <th scope="col" class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var asignacion in Model.AsignacionesRegistradas)
+                                {
+                                    var estadoLabel = asignacion.Estado.Equals("ACT", StringComparison.OrdinalIgnoreCase)
+                                        ? "Activo"
+                                        : "Inactivo";
+                                    <tr data-empresa="@asignacion.Empresa">
+                                        <td>@(string.IsNullOrWhiteSpace(asignacion.NombreEmpresa) ? asignacion.Empresa : asignacion.NombreEmpresa)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(asignacion.NombreMedico) ? asignacion.CedulaMedico : asignacion.NombreMedico)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(asignacion.NombreDependencia) ? asignacion.CodDependencia : asignacion.NombreDependencia)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(asignacion.NombreServicio) ? asignacion.CodServicio : asignacion.NombreServicio)</td>
+                                        <td>@asignacion.Cantidad</td>
+                                        <td>@estadoLabel</td>
+                                        <td class="text-end text-nowrap">
+                                            <a class="btn btn-sm btn-outline-secondary"
+                                               asp-action="EditarAsignacion"
+                                               asp-route-empresa="@asignacion.Empresa"
+                                               asp-route-cedulaMedico="@asignacion.CedulaMedico"
+                                               asp-route-codDependencia="@asignacion.CodDependencia"
+                                               asp-route-codServicio="@asignacion.CodServicio"
+                                               aria-label="Editar asignación @asignacion.CodServicio">
+                                                Editar
+                                            </a>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger btn-eliminar-asignacion"
+                                                    data-empresa="@asignacion.Empresa"
+                                                    data-cedula-medico="@asignacion.CedulaMedico"
+                                                    data-cod-dependencia="@asignacion.CodDependencia"
+                                                    data-cod-servicio="@asignacion.CodServicio"
+                                                    data-descripcion="@($"{asignacion.NombreMedico} - {asignacion.NombreServicio}")"
+                                                    aria-label="Eliminar asignación @asignacion.CodServicio">
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalEliminarAsignacion" tabindex="-1" aria-labelledby="modalEliminarAsignacionLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="EliminarAsignacion" asp-controller="Condicional" method="post" id="formEliminarAsignacion">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="empresa" id="empresaEliminar" value="" />
+                <input type="hidden" name="cedulaMedico" id="cedulaMedicoEliminar" value="" />
+                <input type="hidden" name="codDependencia" id="codDependenciaEliminar" value="" />
+                <input type="hidden" name="codServicio" id="codServicioEliminar" value="" />
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="modalEliminarAsignacionLabel">Confirmar eliminación</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="mensajeEliminarAsignacion" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</section>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/condicional-asignacion.js" asp-append-version="true"></script>
+}

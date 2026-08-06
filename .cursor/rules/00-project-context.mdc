@@ -1,0 +1,47 @@
+---
+description: Contexto global del proyecto webImagenologia — Esculapio. Se aplica siempre.
+alwaysApply: true
+---
+
+# Contexto del Proyecto
+
+## Producto
+Plataforma web de gestión de estudios radiológicos para el sistema Esculapio.
+Multi-empresa, multi-sede, multi-rol.
+
+## Stack obligatorio
+- ASP.NET Core MVC 8, C#, Razor Views
+- Bootstrap 5, HTML5, CSS3, vanilla JS (sin frameworks pesados)
+- API externa: https://appsintranet.esculapiosis.com/ApiCampbell/api
+- BD: MySQL 5.6 (acceso SOLO via API externa — nunca conexión directa)
+- Automatización: N8N en n8n.esculapiosis.com
+- Orquestación de construcción: Python + cursor-sdk
+
+## Roles de usuario
+- **Administrador**: acceso a Parámetros + todo lo demás
+- **Médico/Radiólogo**: solo Portal Web Radiólogos
+- **Operador**: asignación y seguimiento de estudios
+
+## Tablas MySQL relevantes
+| Tabla | Propósito |
+|-------|-----------|
+| estudiosdiagnosticos_empresa | Parametrización cantidad estudios por empresa/servicio |
+| estudiosdiagnosticos_medicos | Asignación de estudios a médicos por empresa |
+| estudiosdiagnosticos_programacion | Estudios asignados diariamente a cada radiólogo |
+| estudiosdiagnosticos_sinresultado | Estudios sin resultado para distribuir |
+| estudiosdiagnosticos_automatizacionwf | Config de automatización N8N |
+
+## Endpoints API disponibles
+```
+GET /Usuarios/obtener-servidores
+GET /Usuarios/obtener-empresas?Ipconexion=&BdConexion=&PortConexion=&Usuario=&PasswordUsu=
+GET /Usuarios/obtener-validaconexion?IpConexion=&Usuario=&PasswordUsu=
+GET /Diagnosticos/obtener-diagnosticocuenta?Empresa=&NoCuenta=
+GET /Diagnosticos/obtener-notasmedicascuenta?Empresa=&NoCuenta=
+```
+
+## Reglas de arquitectura
+- Un único `HttpClient` tipado: `IEsculapioApiClient` / `EsculapioApiClient`
+- ConnectionString en sesión cifrada (DataProtection) — nunca en cookies en claro
+- Toda lógica de negocio en Services, nunca en Controllers ni Views
+- Los SPs MySQL se invocan desde N8N, NO desde el web

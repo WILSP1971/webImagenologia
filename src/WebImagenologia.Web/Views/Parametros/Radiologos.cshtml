@@ -1,0 +1,314 @@
+@model WebImagenologia.Web.Models.ViewModels.RadiologosViewModel
+@{
+    ViewData["Title"] = "Radiólogos por Empresa";
+    Layout = "_Layout";
+}
+
+<section class="param-page">
+    <header class="param-page-header mb-4">
+        <div>
+            <p class="param-page-kicker mb-1">Parámetros</p>
+            <h1 class="param-page-title h3 mb-0">Radiólogos por Empresa</h1>
+        </div>
+        <partial name="_BotonRegresar" />
+    </header>
+
+    @if (ViewData["SuccessMessage"] is string successMessage)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="status">
+            @successMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    @if (ViewData["ErrorMessage"] is string errorMessage)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @errorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    @if (ViewData["WarningMessage"] is string warningMessage)
+    {
+        <div class="alert alert-warning alert-dismissible fade show" role="status">
+            @warningMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="param-card">
+                <h2 class="param-card-title h5">Registrar radiólogo</h2>
+
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger py-2" role="alert"></div>
+
+                <form asp-action="Registrar" asp-controller="Parametros" method="post" novalidate id="formRadiologo">
+                    <div class="mb-3">
+                        <label asp-for="CedulaMedico" class="form-label"></label>
+                        <select asp-for="CedulaMedico"
+                                class="form-select"
+                                id="selectMedico"
+                                aria-required="true"
+                                data-medico-target="nombreMedico">
+                            <option value="">-- Seleccione médico --</option>
+                            @foreach (var medico in Model.MedicosDisponibles)
+                            {
+                                <option value="@medico.Cedula" data-nombre="@medico.Nombre">@medico.Nombre (@medico.Cedula)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="CedulaMedico" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreMedico" class="form-label"></label>
+                        <input asp-for="NombreMedico"
+                               class="form-control"
+                               id="nombreMedico"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="UsuarioEsculapio" class="form-label"></label>
+                        <input asp-for="UsuarioEsculapio"
+                               class="form-control"
+                               autocomplete="username"
+                               aria-required="true"
+                               placeholder="Digite usuario Esculapio" />
+                        <span asp-validation-for="UsuarioEsculapio" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="CodDependencia" class="form-label">Dependencia</label>
+                        <select asp-for="CodDependencia"
+                                class="form-select"
+                                id="selectDependencia"
+                                aria-required="true"
+                                data-dependencia-target="nombreDependencia">
+                            <option value="">-- Seleccione dependencia --</option>
+                            @foreach (var dependencia in Model.DependenciasDisponibles)
+                            {
+                                <option value="@dependencia.CodDependencia"
+                                        data-nombre="@dependencia.NombreDependencia">
+                                    @dependencia.NombreDependencia (@dependencia.CodDependencia)
+                                </option>
+                            }
+                        </select>
+                        <span asp-validation-for="CodDependencia" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreDependencia" class="form-label"></label>
+                        <input asp-for="NombreDependencia"
+                               class="form-control"
+                               id="nombreDependencia"
+                               readonly
+                               aria-readonly="true" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Cantidad" class="form-label"></label>
+                        <input name="Cantidad"
+                               id="Cantidad"
+                               class="form-control"
+                               type="number"
+                               min="1"
+                               step="1"
+                               aria-required="true"
+                               placeholder="Cantidad de estudios a asignar"
+                               value="@(Model.Cantidad > 0 ? Model.Cantidad.ToString(System.Globalization.CultureInfo.InvariantCulture) : null)" />
+                        <span asp-validation-for="Cantidad" class="text-danger"></span>
+                    </div>
+
+                    <fieldset class="mb-3">
+                        <legend class="form-label fs-6 mb-2">@Html.DisplayNameFor(m => m.EmpresasSeleccionadas)</legend>
+                        <div class="empresas-check-group" role="group" aria-label="Empresas asignadas al usuario">
+                            @if (Model.EmpresasDisponibles.Count == 0)
+                            {
+                                <p class="text-muted small mb-0">No hay empresas asignadas en su sesión.</p>
+                            }
+                            else
+                            {
+                                @foreach (var empresa in Model.EmpresasDisponibles)
+                                {
+                                    var inputId = $"empresa_{empresa.Codigo}";
+                                    <div class="form-check">
+                                        <input class="form-check-input empresa-checkbox"
+                                               type="checkbox"
+                                               name="EmpresasSeleccionadas"
+                                               value="@empresa.Codigo"
+                                               id="@inputId"
+                                               data-nombre="@empresa.Nombre"
+                                               @(Model.EmpresasSeleccionadas.Contains(empresa.Codigo) ? "checked" : null) />
+                                        <label class="form-check-label" for="@inputId">@empresa.Etiqueta</label>
+                                    </div>
+                                }
+                            }
+                        </div>
+                        <span asp-validation-for="EmpresasSeleccionadas" class="text-danger"></span>
+                    </fieldset>
+
+                    <div class="mb-3">
+                        <label asp-for="NombreEmpresa" class="form-label"></label>
+                        <input asp-for="NombreEmpresa"
+                               class="form-control"
+                               id="nombreEmpresa"
+                               readonly
+                               aria-readonly="true"
+                               aria-describedby="nombreEmpresaHelp" />
+                        <div id="nombreEmpresaHelp" class="form-text">Se muestra la última empresa seleccionada.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100">Agregar / Registrar</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            <div class="param-card param-card-table">
+                <h2 class="param-card-title h5">Médicos registrados</h2>
+
+                @if (Model.RadiologosRegistrados.Count == 0)
+                {
+                    <p class="text-muted mb-0" role="status">No hay radiólogos registrados.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 param-table" aria-label="Radiólogos registrados">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Empresa</th>
+                                    <th scope="col">Médico</th>
+                                    <th scope="col">Usuario Esculapio</th>
+                                    <th scope="col">Dependencia</th>
+                                    <th scope="col">Cantidad</th>
+                                    <th scope="col" class="text-end">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var radiologo in Model.RadiologosRegistrados)
+                                {
+                                    var empresaCodigo = radiologo.Empresas.FirstOrDefault() ?? string.Empty;
+                                    var nombreDependencia = string.IsNullOrWhiteSpace(radiologo.NombreDependencia)
+                                        ? radiologo.CodDependencia
+                                        : radiologo.NombreDependencia;
+                                    <tr>
+                                        <td>@(string.IsNullOrWhiteSpace(radiologo.NombreEmpresas) ? empresaCodigo : radiologo.NombreEmpresas)</td>
+                                        <td>@(string.IsNullOrWhiteSpace(radiologo.NombreMedico) ? radiologo.CedulaMedico : radiologo.NombreMedico)</td>
+                                        <td>@radiologo.UsuarioEsculapio</td>
+                                        <td>@nombreDependencia</td>
+                                        <td>@radiologo.Cantidad</td>
+                                        <td class="text-end text-nowrap">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary btn-editar-radiologo"
+                                                    data-empresa="@empresaCodigo"
+                                                    data-cedula="@radiologo.CedulaMedico"
+                                                    data-nombre="@radiologo.NombreMedico"
+                                                    data-usuario="@radiologo.UsuarioEsculapio"
+                                                    data-cod-dependencia="@radiologo.CodDependencia"
+                                                    data-nombre-dependencia="@nombreDependencia"
+                                                    data-cantidad="@radiologo.Cantidad"
+                                                    aria-label="Editar radiólogo @radiologo.NombreMedico">
+                                                Editar
+                                            </button>
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-danger btn-eliminar-radiologo"
+                                                    data-empresa="@empresaCodigo"
+                                                    data-cedula="@radiologo.CedulaMedico"
+                                                    data-nombre="@radiologo.NombreMedico"
+                                                    data-usuario="@radiologo.UsuarioEsculapio"
+                                                    data-cod-dependencia="@radiologo.CodDependencia"
+                                                    data-cantidad="@radiologo.Cantidad"
+                                                    aria-label="Eliminar radiólogo @radiologo.NombreMedico">
+                                                Eliminar
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@* Modal Editar Radiólogo *@
+<div class="modal fade" id="modalEditarRadiologo" tabindex="-1" aria-labelledby="modalEditarRadiologoLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form asp-action="Registrar" asp-controller="Parametros" method="post" id="formEditarRadiologo" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="ModoEdicion" value="true" />
+                <input type="hidden" name="EmpresaEdicion" id="editRadEmpresa" value="" />
+                <input type="hidden" name="EmpresasSeleccionadas" id="editRadEmpresasSel" value="" />
+                <input type="hidden" name="CedulaMedico" id="editRadCedula" value="" />
+                <input type="hidden" name="NombreMedico" id="editRadNombreMedico" value="" />
+                <input type="hidden" name="CodDependencia" id="editRadCodDependencia" value="" />
+                <input type="hidden" name="NombreDependencia" id="editRadNombreDependencia" value="" />
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="modalEditarRadiologoLabel">Editar radiólogo</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Médico</label>
+                        <input type="text" class="form-control" id="editRadNombreMedicoDisplay" readonly aria-readonly="true" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRadUsuario" class="form-label fw-semibold">Usuario Esculapio</label>
+                        <input type="text" class="form-control" id="editRadUsuario" name="UsuarioEsculapio" aria-required="true" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Dependencia</label>
+                        <input type="text" class="form-control" id="editRadNombreDependenciaDisplay" readonly aria-readonly="true" />
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRadCantidad" class="form-label fw-semibold">Cantidad de estudios</label>
+                        <input type="number" class="form-control" id="editRadCantidad" name="Cantidad" min="1" step="1" aria-required="true" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@* Modal Eliminar Radiólogo *@
+<div class="modal fade" id="modalEliminarRadiologo" tabindex="-1" aria-labelledby="modalEliminarRadiologoLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form asp-action="Eliminar" asp-controller="Parametros" method="post" id="formEliminarRadiologo">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="empresa" id="empresaEliminarRad" value="" />
+                <input type="hidden" name="cedulaMedico" id="cedulaEliminarRad" value="" />
+                <input type="hidden" name="codDependencia" id="codDependenciaEliminarRad" value="" />
+                <input type="hidden" name="usuarioEsculapio" id="usuarioEliminarRad" value="" />
+                <input type="hidden" name="cantidad" id="cantidadEliminarRad" value="" />
+                <div class="modal-header">
+                    <h2 class="modal-title h5" id="modalEliminarRadiologoLabel">Confirmar eliminación</h2>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="mensajeEliminarRadiologo" class="mb-0"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-danger">Eliminar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/parametros-radiologos.js" asp-append-version="true"></script>
+}

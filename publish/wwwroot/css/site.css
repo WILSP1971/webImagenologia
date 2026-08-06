@@ -1,0 +1,32 @@
+/* Estilos personalizados — Imagenología Esculapio */
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+footer.footer {
+    margin-top: auto;
+}
+
+.navbar-brand {
+    letter-spacing: 0.02em;
+}
+
+.card {
+    border: none;
+}
+
+.empresas-check-group {
+    max-height: 12rem;
+    overflow-y: auto;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius);
+    padding: 0.75rem;
+}
