@@ -1,100 +1,102 @@
-# Cómo expone los datos el PACS (contexto para el enjambre)
+# Cómo expone los datos el PACS (contexto real para el enjambre)
 
 > Documento de contexto para el diseño de **PortalImagenologia**
 > (`https://appsintranet.esculapiosis.com/PortalImagenologia`, IIS sobre Windows Server 2012 R2).
 > Responde a la pregunta del enjambre: *"¿cómo expone los datos el PACS?"*
+>
+> **Los datos de este documento NO son suposiciones.** Se extrajeron de la captura de red
+> real (`ActualizacionCodigo/localhost.har`) del visor Oviyam en producción, endpoint
+> `DicomNodes.do` y `Echo.do`.
 
 ## Resumen ejecutivo
 
-Hoy ya existe un acceso web funcional al PACS: **Oviyam** corriendo en el servidor
-`190.14.253.123` en `http://localhost:8080/oviyam/`. Oviyam es un visor DICOM web
-*zero-footprint* que normalmente se despliega sobre **dcm4chee** (Tomcat en `:8080`).
+El acceso web al PACS hoy es **Oviyam** en `http://localhost:8080/oviyam/` sobre **dcm4chee**
+(Tomcat en `:8080`). Oviyam consulta por **DIMSE** y recupera imágenes por **WADO-URI**
+(`:8080/wado`) devolviéndolas ya como **JPEG**.
 
-Por tanto, **el nuevo portal no necesita inventar el acceso al PACS**: puede reutilizar
-los mismos mecanismos que Oviyam ya usa.
+Existen **dos backends PACS** y **cuatro orígenes lógicos** (las pestañas de Oviyam).
+
+## Datos reales confirmados (fuente: `DicomNodes.do`)
+
+| Pestaña (logicalname) | Backend | Host | Puerto DIMSE | AE Title | Retrieve | WADO | imageType | previews |
+|-----------------------|---------|------|-------------|----------|----------|------|-----------|----------|
+| **CAMPBELL**          | dcm4chee | `172.16.10.100` | `11112` | `DCM4CHEE` | WADO | `:8080/wado` | JPEG | true |
+| **FUNDACIONCAMPBELL** | dcm4chee | `172.16.10.100` | `11112` | `DCM4CHEE` | WADO | `:8080/wado` | JPEG | false |
+| **SANTAMARTA**        | dcm4chee | `172.16.50.100` | `11112` | `DCM4CHEE` | WADO | `:8080/wado` | JPEG | true |
+| **VISORIMAGENLOGIA**  | **Orthanc** | `192.168.2.17` | `4242` | `ESCULAPIO_ORTHANC` | WADO | `:8080/wado` | JPEG | true |
+
+- **AE llamante (calling AET) de Oviyam:** `OVIYAM2`, listener en puerto `1025`.
+- **Verificación C-ECHO real y exitosa:**
+  `Echo.do?dicomURL=DICOM://DCM4CHEE:OVIYAM2@172.16.10.100:11112` → `EchoSuccess`.
+
+> **Corrección importante para el enjambre:** el AE Title real es **`DCM4CHEE`**, no
+> `PACS_SERVER`, y el WADO está en el puerto **8080** contexto **`/wado`** (no en el `172.16.10`
+> genérico que aparecía en la config de ejemplo del prompt). Usar SIEMPRE los valores de la tabla.
 
 ## Cómo expone los datos el PACS
 
-El PACS expone la información por dos vías:
+1. **DIMSE (DICOM clásico, TCP)** — consulta y recuperación:
+   - `C-FIND` → búsqueda (Patient ID, Study Date, Modality, etc.)
+   - `C-MOVE` → recuperación de estudios/series hacia un AE receptor.
+   - Puerto **`11112`** en dcm4chee; **`4242`** en el nodo Orthanc.
+2. **WADO-URI (HTTP)** — recuperación de la imagen ya rasterizada:
+   - `http://<host>:8080/wado?requestType=WADO&studyUID=...&seriesUID=...&objectUID=...&contentType=image/jpeg`
+   - Es lo que Oviyam usa hoy (`imageType=JPEG`). Sirve para vista rápida, **no** trae el DICOM crudo con toda la metadata para un visor avanzado (MPR, window-level dinámico, etc.).
 
-1. **DIMSE (DICOM "clásico", sobre TCP)** — usado para *buscar/consultar* estudios:
-   - `C-FIND` → consulta (Patient ID, Study Date, Modality, etc.)
-   - `C-MOVE` / `C-GET` → recuperación de imágenes
-   - Puerto típico: `104` u `11112`.
-   - Requiere AE Title, host y puerto configurados (lo que Oviyam guarda por cada pestaña).
+> **Limitación:** dcm4chee 2.x expone WADO-URI clásico (imagen JPEG/PNG por objeto), pero
+> **no DICOMweb REST moderno** (QIDO-RS / WADO-RS / STOW-RS) que necesitan OHIF/Cornerstone
+> para un visor de calidad diagnóstica. De ahí la estrategia del gateway (abajo).
 
-2. **WADO / DICOMweb (sobre HTTP)** — **la vía relevante para PortalImagenologia**,
-   porque es HTTP y la puede consumir directamente una app web en IIS:
-   - `WADO-URI` → recupera un objeto/imagen: `.../wado?requestType=WADO&studyUID=...&seriesUID=...&objectUID=...`
-   - Si el backend es dcm4chee-arc 5.x, además hay **DICOMweb REST completo**:
-     - `QIDO-RS` → búsqueda de estudios/series/instancias (JSON)
-     - `WADO-RS` → recuperación de instancias/frames/metadata
-     - `STOW-RS` → almacenamiento
+## Estrategia recomendada: Orthanc como gateway DICOMweb
 
-### Las 4 pestañas de Oviyam
+Ya hay nodo Orthanc en la red (`192.168.2.17:4242`, AE `ESCULAPIO_ORTHANC`). El enfoque que
+el enjambre ya empezó a andamiar (ver `ActualizacionCodigo/`) es:
 
-Las pestañas **CAMPBELL, FUNDACIONCAMPBELL, SANTAMARTA, VISORIMAGENLOGIA** son
-**4 orígenes / AE Titles** ya configurados. Pueden ser 4 PACS distintos o 4 buzones/AE
-del mismo dcm4chee. **Hay que confirmar cuál es cuál** (ver plantilla más abajo).
+```
+[Radiólogo] → HTTPS → IIS /PortalImagenologia (.NET 8)
+                          │  (emite token corto, audita, autoriza por caso/identificación)
+                          ▼
+                    Orthanc (gateway DICOMweb)  ── C-MOVE/C-FIND (DIMSE) ──► dcm4chee (172.16.10.100 / .50.100)
+                    localhost:8042
+                    /PortalImagenologia/dicomweb  (QIDO-RS · WADO-RS · STOW-RS)
+                          ▲
+                          │  DICOMweb moderno (JSON + DICOM-P10)
+                    [Visor OHIF / Cornerstone en el navegador]
+```
 
-## Opciones de arquitectura para PortalImagenologia
+- **Orthanc** actúa como C-MOVE SCU hacia dcm4chee, cachea los estudios y los re-expone como
+  **DICOMweb** moderno en `http://localhost:8042/PortalImagenologia/dicomweb`.
+- El **visor** (OHIF/Cornerstone) consume DICOMweb, no toca directamente el dcm4chee.
+- La **app .NET 8** hace de broker de seguridad: valida sesión del radiólogo, resuelve
+  caso/identificación → StudyInstanceUID, emite un **token corto (JWT ~10 min)** y audita.
 
-- **Opción A — Rápida:** embeber Oviyam (iframe) o desplegar otra instancia bajo
-  `/PortalImagenologia`. Menos control de UI, pero funciona ya.
-- **Opción B — Propia:** construir el visor (p.ej. con **Cornerstone.js** / OHIF) consumiendo
-  los **mismos endpoints WADO/DICOMweb** que Oviyam usa. Más trabajo, control total de UI/SSO
-  bajo el dominio `appsintranet.esculapiosis.com`.
+Config ya presente en el repo (`ActualizacionCodigo/appsettings.Visor.json`):
+- `OrthancRestBaseUrl`: `http://localhost:8042`
+- `OrthancDicomWebBaseUrl`: `http://localhost:8042/PortalImagenologia/dicomweb`
+- `OrthancAet`: `ESCULAPIO_ORTHANC`
+- `TokenMinutos`: `10`  · `TokenSecret`: **no subir al repo** (User-Secrets / variable de entorno)
 
-> Decisión pendiente del enjambre: A vs B. La elección depende del backend real
-> (dcm4chee 2.x solo WADO-URI vs dcm4chee-arc 5.x con DICOMweb completo).
+## Flujo de búsqueda (2 llaves de acceso)
 
----
+El estudio se localiza por **(a) Número de Caso/Cuenta** o **(b) Número de Identificación**:
 
-## Plantilla: 3 datos a confirmar en el servidor
+```
+Caso/Cuenta  ─┐
+              ├─► [.NET] resuelve → PatientID / StudyInstanceUID ─► QIDO-RS (Orthanc) ─► lista de estudios ─► OHIF abre StudyInstanceUID
+Identificación┘
+```
 
-> Completar directamente en el servidor `190.14.253.123` (o donde corra el PACS)
-> y devolver esto al enjambre.
+- La app ya tiene la relación clínica caso↔paciente en su BD; el visor solo necesita el
+  **StudyInstanceUID** (o PatientID + filtros) para el `QIDO-RS`.
 
-### 1. Endpoint WADO / DICOMweb real
+## Datos aún por confirmar en el servidor
 
-Abrir un estudio en Oviyam → **F12 → pestaña Network** → copiar la(s) URL(s) de las
-peticiones que traen la imagen. Esa URL es *literalmente* cómo se recuperan las imágenes.
-
-- Base URL WADO observada: `__________________________________`
-  _(ej. `http://localhost:8080/wado?requestType=WADO&studyUID=...`)_
-- ¿Hay endpoints DICOMweb REST? (QIDO/WADO/STOW-RS): `[ ] Sí   [ ] No`
-  - Base DICOMweb (si aplica): `__________________________________`
-    _(ej. `http://localhost:8080/dcm4chee-arc/aets/{AET}/rs`)_
-- ¿Requiere autenticación (usuario/token/Keycloak)? `[ ] No  [ ] Sí →` `__________`
-
-### 2. Configuración de conexión al PACS (por cada AE / pestaña)
-
-Revisar la config de Oviyam (`datasource.properties` o la administración de AEs)
-y anotar los parámetros de cada origen:
-
-| Pestaña            | AE Title | Host / IP | Puerto DIMSE | Notas |
-|--------------------|----------|-----------|--------------|-------|
-| CAMPBELL           |          |           |              |       |
-| FUNDACIONCAMPBELL  |          |           |              |       |
-| SANTAMARTA         |          |           |              |       |
-| VISORIMAGENLOGIA   |          |           |              |       |
-
-### 3. Backend y versión del PACS
-
-- Software PACS: `[ ] dcm4chee 2.x   [ ] dcm4chee-arc 5.x   [ ] otro →` `__________`
-- Versión exacta: `__________`
-- Servidor de aplicaciones: `[ ] Tomcat  [ ] WildFly  [ ] otro →` `__________`
-- ¿Corre en el mismo host que el web/IIS (`190.14.253.123`) o en otro? `__________`
-- Puerto HTTP del backend: `__________` _(observado: 8080)_
+1. **¿Orthanc ya está desplegado y con el plugin DICOMweb activo** en `192.168.2.17:8042`,
+   o hay que instalarlo/configurarlo? (el `:4242` es su puerto DICOM; el `:8042` es el REST).
+2. **Ruta de red desde el servidor web (IIS) hacia** `172.16.10.100`, `172.16.50.100` y
+   `192.168.2.17` (¿mismo segmento? ¿firewall/VLAN entre intranet y PACS?).
+3. **Credenciales de Orthanc** (`OrthancUser`/`OrthancPassword`) para producción.
+4. **Volumen/retención**: ¿Orthanc cachea todo o hace fetch-on-demand y purga? (impacta disco).
 
 ---
-
-## Notas de red / despliegue (a validar)
-
-- El portal vive en IIS bajo `/PortalImagenologia`. Si consume el PACS por HTTP,
-  hay que decidir si IIS actúa como **reverse proxy** hacia `:8080` (ARR) o si el
-  navegador del usuario llega directo al PACS (CORS + accesibilidad de red).
-- `localhost:8080` solo es accesible *desde el servidor*. Para acceso desde clientes
-  hay que exponerlo (proxy en IIS es lo más limpio y mantiene todo bajo el mismo dominio HTTPS).
-
-_Última actualización: 2026-08-07_
+_Fuente de datos: `ActualizacionCodigo/localhost.har`, `F12DOM.txt` — Última actualización: 2026-08-07_
