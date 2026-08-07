@@ -180,22 +180,25 @@ def cap_trouble():
 "New-Item -ItemType Directory -Force -Path C:\\Orthanc | Out-Null\n"
 "Start-Service Orthanc\n"
 "Get-Service Orthanc            # debe quedar Running; probar http://localhost:8042")
-    h3("11.2b Aplicar la config del gateway con un archivo de override (recomendado)")
-    p("La carpeta <font face='Courier' size=9>Configuration\\</font> del instalador trae ~15 archivos <font face='Courier' size=9>.json</font> que Orthanc <b>fusiona</b> (el último en orden alfabético gana). En vez de reescribir el <font face='Courier' size=9>orthanc.json</font> de 42 KB, se agrega <font face='Courier' size=9>zz-esculapio-gateway.json</font> (el prefijo <font face='Courier' size=9>zz-</font> asegura que cargue al final) con SOLO nuestras claves:")
+    h3("11.2b Aplicar la config del gateway: editar el archivo core (NO usar override)")
+    danger("Orthanc 1.12.1 prohíbe claves duplicadas entre archivos", "La instalación es modular: cada plugin tiene su <font face='Courier' size=9>.json</font> (DicomWeb→dicomweb.json, StoneWebViewer→stone-webviewer.json, …) y NINGUNA clave se repite. Si agregas un archivo de override con una clave que ya existe (p.ej. <font face='Courier' size=9>DicomAet</font> en <font face='Courier' size=9>orthanc.json</font>), Orthanc aborta: <font face='Courier' size=9>Bad file format: the configuration section \"DicomAet\" is defined in 2 different configuration files (code 15)</font>. <b>No uses archivos de override que dupliquen claves.</b>")
+    p("La forma correcta es editar el archivo que <b>ya</b> contiene cada clave: las claves core (DicomAet, DicomPort, DicomModalities, StorageDirectory, IndexDirectory, RemoteAccessAllowed…) van en <font face='Courier' size=9>orthanc.json</font>; la sección DicomWeb va en <font face='Courier' size=9>dicomweb.json</font>. Reemplaza el <font face='Courier' size=9>orthanc.json</font> por una versión core con nuestros valores (SIN secciones DicomWeb/StoneWebViewer):")
     code(
 '{\n'
-'  "DicomAet": "ESCULAPIO_ORTHANC",\n'
-'  "DicomPort": 4242,\n'
-'  "RemoteAccessAllowed": false,\n'
+'  "Name": "Esculapio DICOMweb Gateway",\n'
+'  "StorageDirectory": "C:/Orthanc/Storage",\n'
+'  "IndexDirectory": "C:/Orthanc/Index",\n'
+'  "HttpServerEnabled": true, "HttpPort": 8042, "SslEnabled": false,\n'
+'  "RemoteAccessAllowed": false, "AuthenticationEnabled": false,\n'
+'  "DicomServerEnabled": true, "DicomAet": "ESCULAPIO_ORTHANC", "DicomPort": 4242,\n'
+'  "DicomAlwaysAllowEcho": true, "DicomCheckModalityHost": true,\n'
 '  "DicomModalities": {\n'
 '    "pacs": { "AET": "DCM4CHEE", "Host": "172.16.10.100", "Port": 11112,\n'
 '              "AllowEcho": true, "AllowFind": true, "AllowMove": true, "AllowGet": true, "AllowStore": true }\n'
 '  },\n'
-'  "DicomWeb": { "Enable": true, "Root": "/PortalImagenologia/dicomweb/",\n'
-'                "EnableWado": true, "WadoRoot": "/PortalImagenologia/wado",\n'
-'                "StudiesMetadata": "Full", "SeriesMetadata": "Full" }\n'
+'  "Plugins": [ "C:/Program Files/Orthanc Server/Plugins" ]\n'
 '}')
-    p("Colocarlo en <font face='Courier' size=9>C:\\Program Files\\Orthanc Server\\Configuration\\</font>, <font face='Courier' size=9>Restart-Service Orthanc</font>, y verificar:")
+    p("La sección DicomWeb (Root=<font face='Courier' size=9>/PortalImagenologia/dicomweb/</font>) se edita aparte en <font face='Courier' size=9>dicomweb.json</font>, no en orthanc.json. Tras reemplazar: <font face='Courier' size=9>Restart-Service Orthanc</font> y verificar:")
     code(
 "Invoke-RestMethod http://localhost:8042/system | Select Name,DicomAet,Version\n"
 "Invoke-RestMethod -Method Post http://localhost:8042/modalities/pacs/echo")
