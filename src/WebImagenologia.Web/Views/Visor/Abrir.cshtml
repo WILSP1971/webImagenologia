@@ -1,0 +1,14 @@
+@model WebImagenologia.Web.Models.Visor.TokenPayload
+@{
+    ViewData["Title"] = "Visor de imágenes";
+}
+
+<!--
+    Vista placeholder de F1 (SPEC-002). El embebido real de OHIF (SPEC-004) reemplazará
+    este contenido; el contrato HTTP (validación de token, anti-uso cruzado) ya es real.
+-->
+<div class="container mt-4">
+    <h1>Visor de imágenes</h1>
+    <p>Estudio: <strong>@Model.StudyInstanceUID</strong></p>
+    <p class="text-muted">El visor diagnóstico (OHIF) se integrará en una fase posterior (SPEC-004).</p>
+</div>
