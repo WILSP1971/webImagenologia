@@ -199,6 +199,7 @@ def cap_trouble():
 '  "Plugins": [ "C:/Program Files/Orthanc Server/Plugins" ]\n'
 '}')
     p("La sección DicomWeb (Root=<font face='Courier' size=9>/PortalImagenologia/dicomweb/</font>) se edita aparte en <font face='Courier' size=9>dicomweb.json</font>, no en orthanc.json. Tras reemplazar: <font face='Courier' size=9>Restart-Service Orthanc</font> y verificar:")
+    danger("El AE Title (DicomAet) máximo 16 caracteres", "El estándar DICOM limita el AET a 1..16 caracteres. <font face='Courier' size=9>ESCULAPIO_ORTHANC</font> tiene <b>17</b> → Orthanc 1.12.1 aborta con <font face='Courier' size=9>An application entity title (AET) cannot be empty or be longer than 16 characters (code 2009)</font>. Se usa <b><font face='Courier' size=9>ESCULAPIOORTHANC</font></b> (16, sin guion bajo). Ese es el AET que debe registrarse en dcm4chee para el C-MOVE (no el de 17).")
     code(
 "Invoke-RestMethod http://localhost:8042/system | Select Name,DicomAet,Version\n"
 "Invoke-RestMethod -Method Post http://localhost:8042/modalities/pacs/echo")
@@ -532,7 +533,7 @@ def anexo():
         ["dcm4chee — hosts", "172.16.10.100 (Campbell/Fundación), 172.16.50.100 (Santa Marta)"],
         ["dcm4chee — puerto DIMSE", "11112"],
         ["dcm4chee — WADO-URI", "http://host:8080/wado (imageType JPEG)"],
-        ["Orthanc — AE Title", "ESCULAPIO_ORTHANC"],
+        ["Orthanc — AE Title", "ESCULAPIOORTHANC (16 chars; el _ largo de 17 es inválido)"],
         ["Orthanc — DICOM SCP", "192.168.2.17:4242"],
         ["Orthanc — HTTP/REST/DICOMweb", "localhost:8042"],
         ["DICOMweb Root (Orthanc e IIS)", "/PortalImagenologia/dicomweb/"],
