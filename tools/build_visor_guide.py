@@ -148,11 +148,50 @@ def toc():
         "8.  Seguridad y hardening",
         "9.  Plan de pruebas end-to-end",
         "10. Bitácora de operación del enjambre (esta sesión)",
+        "11. Solución de problemas y puesta en marcha de Orthanc",
         "Anexo A. Datos reales de referencia",
     ]
     for it in items:
         story.append(Paragraph(it, TOCI))
     story.append(PageBreak())
+
+# ============================ CAP TROUBLESHOOTING (se inserta antes del anexo) ============================
+def cap_trouble():
+    h1("11. Solución de problemas y puesta en marcha de Orthanc")
+    h3("11.1 Error 1359 al detener/reiniciar el servicio Orthanc")
+    p("\"Windows no pudo detener el servicio Orthanc. Error 1359: Error interno\" es un fallo del control de servicios (SCM), <b>no</b> del <font face='Courier' size=9>orthanc.json</font> (la config solo se lee al arrancar). Fuérzalo por línea de comandos (CMD/PowerShell <b>como Administrador</b> en el servidor):")
+    code(
+"net stop Orthanc\n"
+"REM si vuelve a fallar con 1359, mata el proceso y arranca:\n"
+"taskkill /F /IM Orthanc.exe\n"
+"net start Orthanc")
+    h3("11.2 Validar el orthanc.json en modo consola (paso clave)")
+    p("Si Orthanc no vuelve a arrancar, corre el binario a mano para ver el error real (ajusta rutas):")
+    code('"C:\\Program Files\\Orthanc Server\\Orthanc.exe" --verbose "C:\\Program Files\\Orthanc Server\\Configuration"')
+    p("Si ves <font face='Courier' size=9>HTTP server listening on port 8042</font>, el JSON es válido. Causas típicas de fallo:")
+    bullets([
+        "<b>Faltan las carpetas</b> <font face='Courier' size=9>C:\\Orthanc\\Storage</font> / <font face='Courier' size=9>C:\\Orthanc\\Index</font> → créalas (<font face='Courier' size=9>mkdir</font>).",
+        "<b>Claves duplicadas</b>: la instalación lee TODOS los <font face='Courier' size=9>*.json</font> de <font face='Courier' size=9>Configuration\\</font> y los fusiona; una clave repetida en dos archivos rompe el arranque. Deja un solo archivo con estas claves.",
+        "<b>Ruta de Plugins incorrecta</b>: verifica que exista <font face='Courier' size=9>C:\\Program Files\\Orthanc Server\\Plugins</font> con <font face='Courier' size=9>OrthancDicomWeb.dll</font> y <font face='Courier' size=9>OrthancStoneWebViewer.dll</font>.",
+    ])
+    p("Para ver qué config usa el servicio: <font face='Courier' size=9>sc qc Orthanc</font> → mira el <font face='Courier' size=9>BINARY_PATH_NAME</font> (último argumento = archivo/carpeta de config).")
+    h3("11.3 Acceso al PACS para registrar ESCULAPIO_ORTHANC (para C-MOVE)")
+    p("dcm4chee corre en otro servidor (<font face='Courier' size=9>172.16.10.100</font>). Se administra por navegador; según la versión:")
+    bullets([
+        "<b>dcm4chee-arc 5.x</b>: <font face='Courier' size=9>http://172.16.10.100:8080/dcm4chee-arc/ui2</font> → Configuration → Devices/AE → nuevo Network AE.",
+        "<b>dcm4chee 2.x</b>: <font face='Courier' size=9>http://172.16.10.100:8080/dcm4chee-web3</font> → AE Management → New AET.",
+    ])
+    p("Registrar: AET <font face='Courier' size=9>ESCULAPIO_ORTHANC</font>, Host = IP del servidor web (donde corre Orthanc), Port <b>4242</b>. Requiere credenciales de administrador del PACS.")
+    callout("Atajo: C-GET evita tocar el PACS", "Si dcm4chee soporta <b>C-GET</b>, Orthanc recupera por la misma conexión saliente y NO hace falta registrar su AE en el PACS (config ya trae <font face='Courier' size=9>AllowGet: true</font>). Pruébalo antes de depender del admin del PACS. C-ECHO (<font face='Courier' size=9>POST /modalities/pacs/echo</font>) no requiere registro y valida conectividad.")
+    h3("11.4 Herramientas a descargar (servidor web)")
+    table([
+        ["Herramienta", "Dónde", "Archivo"],
+        ["Orthanc Windows (plugins DICOMweb+Stone)", "orthanc.uclouvain.be/downloads/windows-64", "instalador .exe"],
+        ["IIS URL Rewrite 2.1", "iis.net/downloads/microsoft/url-rewrite", "rewrite_amd64_en-US.msi"],
+        ["IIS ARR 3.0", "iis.net/downloads/microsoft/application-request-routing", "requestRouter_amd64.msi"],
+        ["OHIF Viewer (compilar en PC dev)", "github.com/OHIF/Viewers (v3.11.0)", "—"],
+    ], [58*mm, 70*mm, 37*mm])
+    p("Los archivos de configuración (orthanc.json con AE real, reglas IIS/ARR, config y web.config de OHIF) se entregan en el paquete <font face='Courier' size=9>PortalImagenologia-config.zip</font> con su <font face='Courier' size=9>LEEME-INSTALACION.txt</font>.")
 
 # ============================ CAP 1 ============================
 def cap1():
@@ -488,7 +527,7 @@ def footer(canvas, doc):
 
 def build():
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
-    portada(); toc(); cap1(); cap2(); cap3(); cap4(); cap5(); cap6(); cap7(); cap8(); cap9(); cap10(); anexo()
+    portada(); toc(); cap1(); cap2(); cap3(); cap4(); cap5(); cap6(); cap7(); cap8(); cap9(); cap10(); cap_trouble(); anexo()
     doc = SimpleDocTemplate(OUT, pagesize=letter,
                             leftMargin=20*mm, rightMargin=19*mm, topMargin=18*mm, bottomMargin=20*mm,
                             title="Guia Visor DICOM - Portal Web Radiologos",
