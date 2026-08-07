@@ -174,7 +174,32 @@ def cap_trouble():
         "<b>Claves duplicadas</b>: la instalación lee TODOS los <font face='Courier' size=9>*.json</font> de <font face='Courier' size=9>Configuration\\</font> y los fusiona; una clave repetida en dos archivos rompe el arranque. Deja un solo archivo con estas claves.",
         "<b>Ruta de Plugins incorrecta</b>: verifica que exista <font face='Courier' size=9>C:\\Program Files\\Orthanc Server\\Plugins</font> con <font face='Courier' size=9>OrthancDicomWeb.dll</font> y <font face='Courier' size=9>OrthancStoneWebViewer.dll</font>.",
     ])
-    p("Para ver qué config usa el servicio: <font face='Courier' size=9>sc qc Orthanc</font> → mira el <font face='Courier' size=9>BINARY_PATH_NAME</font> (último argumento = archivo/carpeta de config).")
+    p("Para ver qué config usa el servicio: <font face='Courier' size=9>sc.exe qc Orthanc</font> (¡con <b>.exe</b>! en PowerShell <font face='Courier' size=9>sc</font> es alias de Set-Content) → mira el <font face='Courier' size=9>BINARY_PATH_NAME</font>. En la instalación real: <font face='Courier' size=9>C:\\Program Files\\Orthanc Server\\OrthancService.exe</font>, y lee TODOS los <font face='Courier' size=9>*.json</font> de <font face='Courier' size=9>Configuration\\</font>.")
+    warn("Error real observado: SQLite Unable to open the database (code 1002)", "Orthanc arranca, carga plugins y luego muere con <font face='Courier' size=9>[SQLite: Unable to open the database]</font>. Causa: <b>el directorio de la base de datos no existe</b>. El instalador de Windows deja por defecto <font face='Courier' size=9>StorageDirectory</font> e <font face='Courier' size=9>IndexDirectory</font> en <font face='Courier' size=9>C:\\Orthanc</font>. Solución: crear la carpeta y arrancar.")
+    code(
+"New-Item -ItemType Directory -Force -Path C:\\Orthanc | Out-Null\n"
+"Start-Service Orthanc\n"
+"Get-Service Orthanc            # debe quedar Running; probar http://localhost:8042")
+    h3("11.2b Aplicar la config del gateway con un archivo de override (recomendado)")
+    p("La carpeta <font face='Courier' size=9>Configuration\\</font> del instalador trae ~15 archivos <font face='Courier' size=9>.json</font> que Orthanc <b>fusiona</b> (el último en orden alfabético gana). En vez de reescribir el <font face='Courier' size=9>orthanc.json</font> de 42 KB, se agrega <font face='Courier' size=9>zz-esculapio-gateway.json</font> (el prefijo <font face='Courier' size=9>zz-</font> asegura que cargue al final) con SOLO nuestras claves:")
+    code(
+'{\n'
+'  "DicomAet": "ESCULAPIO_ORTHANC",\n'
+'  "DicomPort": 4242,\n'
+'  "RemoteAccessAllowed": false,\n'
+'  "DicomModalities": {\n'
+'    "pacs": { "AET": "DCM4CHEE", "Host": "172.16.10.100", "Port": 11112,\n'
+'              "AllowEcho": true, "AllowFind": true, "AllowMove": true, "AllowGet": true, "AllowStore": true }\n'
+'  },\n'
+'  "DicomWeb": { "Enable": true, "Root": "/PortalImagenologia/dicomweb/",\n'
+'                "EnableWado": true, "WadoRoot": "/PortalImagenologia/wado",\n'
+'                "StudiesMetadata": "Full", "SeriesMetadata": "Full" }\n'
+'}')
+    p("Colocarlo en <font face='Courier' size=9>C:\\Program Files\\Orthanc Server\\Configuration\\</font>, <font face='Courier' size=9>Restart-Service Orthanc</font>, y verificar:")
+    code(
+"Invoke-RestMethod http://localhost:8042/system | Select Name,DicomAet,Version\n"
+"Invoke-RestMethod -Method Post http://localhost:8042/modalities/pacs/echo")
+    callout("OHIF ya viene integrado en Orthanc 1.12.1", "El log de arranque muestra <font face='Courier' size=9>Registering plugin 'ohif' (version 1.0)</font> sirviendo en <font face='Courier' size=9>/ohif/</font>, además de DICOMweb 1.15 y Stone Web Viewer 2.5. Es muy probable que <b>no haga falta compilar OHIF por separado</b>: Orthanc lo sirve directamente. Se valida abriendo un estudio ya en caché por <font face='Courier' size=9>/ohif/</font>.")
     h3("11.3 Acceso al PACS para registrar ESCULAPIO_ORTHANC (para C-MOVE)")
     p("dcm4chee corre en otro servidor (<font face='Courier' size=9>172.16.10.100</font>). Se administra por navegador; según la versión:")
     bullets([
