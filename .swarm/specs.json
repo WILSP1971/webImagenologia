@@ -1,0 +1,83 @@
+{
+  "$schema": "internal://swarm/specs-index",
+  "descripcion": "Indice de SPECs del enjambre Avengers para webImagenologia. Fuente autoritativa: .swarm/PLAN-002.md (APROBADO 2026-08-07).",
+  "ultimaActualizacion": "2026-08-07",
+  "siguienteNumero": 7,
+  "contadores": {
+    "total": 6,
+    "PROPUESTA": 5,
+    "APROBADA": 0,
+    "EN_VERIFICACION": 1,
+    "IMPLEMENTADA": 0,
+    "RECHAZADA": 0,
+    "ARCHIVADA": 0
+  },
+  "adrs": {
+    "total": 1,
+    "siguienteNumero": 2
+  },
+  "specs": [
+    {
+      "id": "SPEC-001",
+      "titulo": "Precondiciones y validacion de entorno (F0)",
+      "archivo": ".swarm/specs/SPEC-001-precondiciones-entorno.md",
+      "fase": "F0",
+      "estado": "PROPUESTA",
+      "dependeDe": [],
+      "plan": "PLAN-002",
+      "creada": "2026-08-07"
+    },
+    {
+      "id": "SPEC-002",
+      "titulo": "Broker de seguridad .NET 8 y APIs REST (F1)",
+      "archivo": ".swarm/specs/SPEC-002-broker-seguridad-apis.md",
+      "fase": "F1",
+      "estado": "EN_VERIFICACION",
+      "dependeDe": ["SPEC-001"],
+      "plan": "PLAN-002",
+      "creada": "2026-08-07",
+      "implementadaPor": "CAPTAIN AMERICA",
+      "implementada": "2026-08-07"
+    },
+    {
+      "id": "SPEC-003",
+      "titulo": "Gateway Orthanc DICOMweb + reverse proxy IIS (F2)",
+      "archivo": ".swarm/specs/SPEC-003-gateway-orthanc-pacs.md",
+      "fase": "F2",
+      "estado": "PROPUESTA",
+      "dependeDe": ["SPEC-001", "SPEC-002"],
+      "plan": "PLAN-002",
+      "creada": "2026-08-07"
+    },
+    {
+      "id": "SPEC-004",
+      "titulo": "UI del visor en Portal Web Radiologos (F3)",
+      "archivo": ".swarm/specs/SPEC-004-ui-visor-portal-radiologos.md",
+      "fase": "F3",
+      "estado": "PROPUESTA",
+      "dependeDe": ["SPEC-002", "SPEC-003"],
+      "plan": "PLAN-002",
+      "creada": "2026-08-07"
+    },
+    {
+      "id": "SPEC-005",
+      "titulo": "Seguridad y auditoria (F4)",
+      "archivo": ".swarm/specs/SPEC-005-seguridad-auditoria.md",
+      "fase": "F4",
+      "estado": "PROPUESTA",
+      "dependeDe": ["SPEC-002", "SPEC-003", "SPEC-004"],
+      "plan": "PLAN-002",
+      "creada": "2026-08-07"
+    },
+    {
+      "id": "SPEC-006",
+      "titulo": "Guia PDF y cierre (F5)",
+      "archivo": ".swarm/specs/SPEC-006-guia-pdf-cierre.md",
+      "fase": "F5",
+      "estado": "PROPUESTA",
+      "dependeDe": ["SPEC-001", "SPEC-002", "SPEC-003", "SPEC-004", "SPEC-005"],
+      "plan": "PLAN-002",
+      "creada": "2026-08-07"
+    }
+  ]
+}

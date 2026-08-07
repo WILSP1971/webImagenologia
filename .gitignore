@@ -28,3 +28,6 @@ Thumbs.db
 # Cursor
 .cursor/chat/
 ActualizacionCodigo/
+
+# Capturas de red / PHI (defensa en profundidad, ver .swarm/specs/SPEC-005)
+*.har
