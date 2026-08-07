@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using WebImagenologia.Web.Models.Domain;
 using WebImagenologia.Web.Services;
+using WebImagenologia.Web.Services.Visor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +77,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddVisorModule(builder.Configuration);
 
 ConfigureTestServices?.Invoke(builder.Services);
 
