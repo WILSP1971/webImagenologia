@@ -30,6 +30,8 @@ public class VisorController : Controller
     private readonly IVisorTokenService _tokenService;
     private readonly IVisorAuditoriaService _auditoriaService;
     private readonly IDicomWebClient _dicomWebClient;
+    private readonly IOrthancGatewayService _orthancGateway;
+    private readonly IMedDreamLaunchService _medDreamLaunch;
     private readonly ISessionService _sessionService;
     private readonly VisorOptions _visorOptions;
     private readonly ILogger<VisorController> _logger;
@@ -39,6 +41,8 @@ public class VisorController : Controller
         IVisorTokenService tokenService,
         IVisorAuditoriaService auditoriaService,
         IDicomWebClient dicomWebClient,
+        IOrthancGatewayService orthancGateway,
+        IMedDreamLaunchService medDreamLaunch,
         ISessionService sessionService,
         IOptions<VisorOptions> visorOptions,
         ILogger<VisorController> logger)
@@ -47,6 +51,8 @@ public class VisorController : Controller
         _tokenService = tokenService;
         _auditoriaService = auditoriaService;
         _dicomWebClient = dicomWebClient;
+        _orthancGateway = orthancGateway;
+        _medDreamLaunch = medDreamLaunch;
         _sessionService = sessionService;
         _visorOptions = visorOptions.Value;
         _logger = logger;
@@ -139,6 +145,11 @@ public class VisorController : Controller
             var token = _tokenService.Emitir(payload);
             var expira = DateTimeOffset.FromUnixTimeSeconds(payload.ExpiresAtUnix);
 
+            // Best-effort: traer el estudio a Orthanc antes de abrir MedDream.
+            _ = await _orthancGateway.AsegurarEstudioDisponibleAsync(
+                request.StudyInstanceUID,
+                cancellationToken);
+
             await _auditoriaService.RegistrarAsync(
                 usuario.Usuario,
                 payload.Cedula,
@@ -147,11 +158,19 @@ public class VisorController : Controller
                 detalle: null,
                 cancellationToken);
 
+            var medDreamUrl = await _medDreamLaunch.BuildViewerUrlAsync(
+                request.StudyInstanceUID,
+                cancellationToken);
+
+            var viewerUrl = !string.IsNullOrWhiteSpace(medDreamUrl)
+                ? medDreamUrl
+                : $"{_visorOptions.ViewerBasePath.TrimEnd('/')}/Abrir/{Uri.EscapeDataString(token)}";
+
             var respuesta = new TokenResponse
             {
                 Token = token,
                 Expira = expira,
-                ViewerUrl = $"{_visorOptions.ViewerBasePath.TrimEnd('/')}/Abrir/{token}"
+                ViewerUrl = viewerUrl
             };
 
             return Ok(respuesta);
@@ -168,9 +187,9 @@ public class VisorController : Controller
         }
     }
 
-    /// <summary>GET /Visor/Abrir/{token}</summary>
+    /// <summary>GET /Visor/Abrir/{token} — puente hacia MedDream (ADR-002).</summary>
     [HttpGet]
-    public IActionResult Abrir(string token)
+    public async Task<IActionResult> Abrir(string token, CancellationToken cancellationToken)
     {
         var usuario = _sessionService.ObtenerUsuario();
         if (usuario is null)
@@ -198,7 +217,17 @@ public class VisorController : Controller
             return View("TokenInvalido");
         }
 
-        // Vista placeholder de F1: el embebido real de OHIF es de SPEC-004.
+        var medDreamUrl = await _medDreamLaunch.BuildViewerUrlAsync(
+            payload.StudyInstanceUID,
+            cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(medDreamUrl))
+        {
+            return Redirect(medDreamUrl);
+        }
+
+        ViewBag.MedDreamConfigured = _visorOptions.MedDreamEnabled;
+        ViewBag.MedDreamViewerBaseUrl = _visorOptions.MedDreamViewerBaseUrl;
         return View(payload);
     }
 

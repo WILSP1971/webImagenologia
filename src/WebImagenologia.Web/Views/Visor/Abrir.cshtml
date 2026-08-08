@@ -1,14 +1,33 @@
 @model WebImagenologia.Web.Models.Visor.TokenPayload
 @{
     ViewData["Title"] = "Visor de imágenes";
+    var medDreamConfigured = ViewBag.MedDreamConfigured as bool? ?? false;
+    var medDreamBase = ViewBag.MedDreamViewerBaseUrl as string ?? "";
 }
 
-<!--
-    Vista placeholder de F1 (SPEC-002). El embebido real de OHIF (SPEC-004) reemplazará
-    este contenido; el contrato HTTP (validación de token, anti-uso cruzado) ya es real.
--->
 <div class="container mt-4">
-    <h1>Visor de imágenes</h1>
-    <p>Estudio: <strong>@Model.StudyInstanceUID</strong></p>
-    <p class="text-muted">El visor diagnóstico (OHIF) se integrará en una fase posterior (SPEC-004).</p>
+    <h1 class="h3">Apertura del visor diagnóstico</h1>
+    <p>Estudio autorizado: <code>@Model.StudyInstanceUID</code></p>
+
+    @if (medDreamConfigured && !string.IsNullOrWhiteSpace(medDreamBase))
+    {
+        <div class="alert alert-warning" role="alert">
+            MedDream está habilitado pero no se pudo generar el token de lanzamiento
+            (TokenService no disponible o sin respuesta). Verifique la configuración
+            <code>Visor:MedDreamTokenServiceBaseUrl</code> y las credenciales en User-Secrets.
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info" role="alert">
+            El puente de seguridad validó el acceso. Configure MedDream
+            (<code>Visor:MedDreamEnabled</code>, URL del visor y TokenService) para abrir
+            el visor diagnóstico certificado. Consulte la Guía de instalación del módulo Visor.
+        </div>
+    }
+
+    <p class="text-muted small mb-0">
+        Token de aplicación válido hasta
+        @DateTimeOffset.FromUnixTimeSeconds(Model.ExpiresAtUnix).LocalDateTime.ToString("dd/MM/yyyy HH:mm:ss").
+    </p>
 </div>

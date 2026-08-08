@@ -29,6 +29,11 @@ public class EstudioResolverTests
             return Task.FromResult(EstudiosPorPatientId);
         }
 
+        public Task<IReadOnlyList<EstudioDicomDto>> BuscarPorStudyInstanceUidAsync(
+            string studyInstanceUid,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<EstudioDicomDto>>(Array.Empty<EstudioDicomDto>());
+
         public Task<byte[]?> ObtenerRenderedInstanceAsync(
             string studyInstanceUid,
             string seriesInstanceUid,

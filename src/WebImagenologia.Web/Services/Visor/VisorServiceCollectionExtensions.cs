@@ -2,7 +2,7 @@ using WebImagenologia.Web.Models.Visor;
 
 namespace WebImagenologia.Web.Services.Visor;
 
-/// <summary>Registro DI aditivo del módulo Visor (SPEC-002 §4.6).</summary>
+/// <summary>Registro DI aditivo del módulo Visor (SPEC-002 §4.6 / ADR-002).</summary>
 public static class VisorServiceCollectionExtensions
 {
     public static IServiceCollection AddVisorModule(this IServiceCollection services, IConfiguration config)
@@ -13,6 +13,7 @@ public static class VisorServiceCollectionExtensions
         services.AddScoped<IEstudioResolver, EstudioResolver>();
         services.AddHttpClient<IDicomWebClient, DicomWebClient>();
         services.AddHttpClient<IOrthancGatewayService, OrthancGatewayService>();
+        services.AddHttpClient<IMedDreamLaunchService, MedDreamLaunchService>();
         return services;
     }
 }

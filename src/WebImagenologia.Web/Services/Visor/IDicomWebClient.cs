@@ -20,6 +20,11 @@ public interface IDicomWebClient
         string patientId,
         CancellationToken cancellationToken = default);
 
+    /// <summary>Busca un estudio (QIDO-RS) por StudyInstanceUID.</summary>
+    Task<IReadOnlyList<EstudioDicomDto>> BuscarPorStudyInstanceUidAsync(
+        string studyInstanceUid,
+        CancellationToken cancellationToken = default);
+
     /// <summary>Obtiene el render (WADO-RS rendered) de una instancia como JPEG/PNG.</summary>
     Task<byte[]?> ObtenerRenderedInstanceAsync(
         string studyInstanceUid,
