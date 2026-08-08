@@ -1,0 +1,23 @@
+/* Estilos aditivos del botón Ver Imágenes (prefijo visor-) */
+.visor-btn-ver-imagenes {
+  white-space: nowrap;
+}
+
+.visor-acciones-cell {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.visor-selector-list {
+  max-height: 16rem;
+  overflow-y: auto;
+}
+
+.visor-selector-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  margin-bottom: 0.35rem;
+}

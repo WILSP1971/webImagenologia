@@ -1,0 +1,11 @@
+@*
+    Partial aditiva SPEC-004 / ADR-002 — no altera la lógica del Index.
+    Inyecta URLs del broker Visor y carga el JS que añade "Ver Imágenes".
+*@
+<div id="visor-ver-imagenes-config"
+     class="d-none"
+     data-resolver-url="@Url.Action("Resolver", "Visor")"
+     data-token-url="@Url.Action("Token", "Visor")"
+     aria-hidden="true"></div>
+<link rel="stylesheet" href="~/css/visor.css" asp-append-version="true" />
+<script src="~/js/visor-ver-imagenes.js" asp-append-version="true"></script>
