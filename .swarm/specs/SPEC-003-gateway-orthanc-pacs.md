@@ -10,12 +10,13 @@
 
 ## 1. Objetivo
 
-Dejar operativa la **cadena de datos extremo a extremo**: `C-FIND` (búsqueda en dcm4chee) → `C-MOVE` bajo demanda (estudio → Orthanc, cache) → re-exposición **DICOMweb** (QIDO-RS/WADO-RS) que consume OHIF, todo servido **mismo-origen** bajo `/PortalImagenologia/dicomweb/` vía reverse proxy IIS. Implementa `DicomWebClient` y `OrthancGatewayService` (contratos definidos en SPEC-002) y aporta la configuración real de Orthanc y del proxy, **con datos reales confirmados por HAR** (`docs/PACS-exposicion.md`).
+Dejar operativa la **cadena de datos extremo a extremo**: `C-FIND` (búsqueda en dcm4chee) → `C-MOVE` bajo demanda (estudio → Orthanc, cache) → re-exposición **DICOMweb** (QIDO-RS/WADO-RS) que consume el broker .NET y el storage de **MedDream** (ADR-002), con proxy IIS bajo `/PortalImagenologia/dicomweb/` (o ruta nativa Orthanc `/dicom-web/`). Implementa `DicomWebClient` y `OrthancGatewayService` (contratos definidos en SPEC-002) y aporta la configuración real de Orthanc y del proxy, **con datos reales confirmados por HAR** (`docs/PACS-exposicion.md`).
 
 ## 2. Depende de
 
-- **SPEC-001 (dura):** requiere decisión **A** (Orthanc/OHIF). Si F0 forzó Plan B, esta spec se rediseña sobre WADO-URI JPEG de dcm4chee.
+- **SPEC-001 (dura):** requiere decisión **A** (Orthanc gateway viable). Si F0 forzó Plan B, esta spec se rediseña sobre WADO-URI JPEG de dcm4chee.
 - **SPEC-002:** provee las interfaces `IDicomWebClient` / `IOrthancGatewayService` y `VisorOptions`.
+- **ADR-002:** el consumidor clínico del storage es MedDream; el broker .NET usa QIDO/WADO para Resolver/Preview.
 
 ## 3. Alcance
 
@@ -28,7 +29,7 @@ Dejar operativa la **cadena de datos extremo a extremo**: `C-FIND` (búsqueda en
 
 ### Fuera
 - Hardening completo/seguridad de red → **SPEC-005** (esta spec fija `RemoteAccessAllowed=false` y proxy read-only como base).
-- UI/OHIF → **SPEC-004**.
+- UI/MedDream → **SPEC-004**.
 
 ## 4. Diseño detallado
 

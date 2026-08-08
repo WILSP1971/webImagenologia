@@ -1,6 +1,6 @@
 # ADR-001 — Orthanc como gateway DICOMweb + OHIF v3 como visor
 
-- **Estado:** **Aceptado** (ratifica la decisión de PLAN-002 §3, aprobado por el Lead 2026-08-07)
+- **Estado:** **Superseded parcialmente por ADR-002 (2026-08-08)** — Orthanc-gateway vigente; elección de visor OHIF reemplazada por MedDream.
 - **Fecha:** 2026-08-07
 - **Autor:** DOCTOR STRANGE (Lead de Arquitectura — Avengers Swarm)
 - **Ámbito:** Módulo Visor de imágenes DICOM diagnóstico de `PortalImagenologia` (.NET 8 / IIS / Windows Server 2012 R2).

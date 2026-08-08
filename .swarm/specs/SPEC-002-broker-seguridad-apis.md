@@ -28,7 +28,7 @@ Definir el contrato detallado del **módulo Visor server-side** de la app .NET 8
 
 ### Fuera
 - Contenido real de `orthanc.json`, reverse proxy y C-FIND/C-MOVE físico → **SPEC-003**.
-- UI, botón, OHIF → **SPEC-004**.
+- UI, botón, MedDream → **SPEC-004** (ADR-002; OHIF descartado como motor diagnóstico).
 - Script SQL de auditoría y hardening → **SPEC-005** (esta spec define solo el contrato de `VisorAuditoriaService`).
 
 ## 4. Diseño detallado

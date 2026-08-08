@@ -1,8 +1,12 @@
 # PLAN-002 — Visor DICOM diagnóstico integrado en Portal Web Radiólogos
 
+> **ENMIENDA 2026-08-08 (ADR-002):** el visor diagnóstico es **MedDream** (certificado), no OHIF.
+> Orthanc como gateway DICOMweb hacia dcm4chee **se mantiene**. Stone = solo prueba de humo.
+> SPEC-004 y este plan se leen bajo ADR-002; donde diga OHIF como motor clínico, sustituir por MedDream.
+
 - **Autor:** DOCTOR STRANGE (Lead de Arquitectura y Specs — Avengers Swarm)
 - **Fecha:** 2026-08-07
-- **Estado:** **APROBADO** por el Lead (2026-08-07) — "APROBADO PLAN-002"
+- **Estado:** **APROBADO** por el Lead (2026-08-07) — "APROBADO PLAN-002"; **enmendado** 2026-08-08 (MedDream)
 - **Insumos autoritativos:** `prompt-lab/prompts/PROMPT-visor-diagnostico-RESET.md`, `docs/PROMPT-visor-diagnostico.md`, `docs/PACS-exposicion.md` (datos HAR reales; prioridad sobre placeholders).
 - **Referencia local (NO código correcto, NO se sube a GitHub):** `ActualizacionCodigo/`.
 
