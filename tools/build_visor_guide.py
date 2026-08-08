@@ -221,6 +221,15 @@ def cap_trouble():
         ["OHIF Viewer (compilar en PC dev)", "github.com/OHIF/Viewers (v3.11.0)", "—"],
     ], [58*mm, 70*mm, 37*mm])
     p("Los archivos de configuración (orthanc.json con AE real, reglas IIS/ARR, config y web.config de OHIF) se entregan en el paquete <font face='Courier' size=9>PortalImagenologia-config.zip</font> con su <font face='Courier' size=9>LEEME-INSTALACION.txt</font>.")
+    h3("11.5 Reverse proxy DICOMweb en IIS — patrón validado")
+    p("El DICOMweb Root se fija en <b><font face='Courier' size=9>dicomweb.json</font></b> (NO en orthanc.json) a <font face='Courier' size=9>/PortalImagenologia/dicomweb/</font>. Para NO modificar la app .NET, el proxy se monta como <b>aplicación hija IIS</b> (igual que OHIF): carpeta <font face='Courier' size=9>dicomweb</font> dentro de la ruta física del portal, con su propio <font face='Courier' size=9>web.config</font> (regla ARR + solo-lectura) y App Pool <b>Sin código administrado</b>. Como el portal padre tiene <font face='Courier' size=9>inheritInChildApplications=\"false\"</font>, la hija no hereda el handler de ASP.NET Core.")
+    bullets([
+        "Habilitar ARR: <font face='Courier' size=9>appcmd set config -section:system.webServer/proxy /enabled:True /commit:apphost</font>.",
+        "Registrar server variables <font face='Courier' size=9>HTTP_X_FORWARDED_PROTO</font> y <font face='Courier' size=9>HTTP_X_FORWARDED_HOST</font> en la app <font face='Courier' size=9>dicomweb</font> (URL Rewrite → View Server Variables), o el proxy da 500.",
+        "Regla: <font face='Courier' size=9>^(.*)</font> → <font face='Courier' size=9>http://localhost:8042/PortalImagenologia/dicomweb/{R:1}</font>; bloquear POST/PUT/DELETE/PATCH (405) para solo-lectura.",
+    ])
+    callout("Validado (2026-08-07)", "<font face='Courier' size=9>https://appsintranet.esculapiosis.com/PortalImagenologia/dicomweb/studies</font> responde <font face='Courier' size=9>[]</font> (HTTP 200) por HTTPS. Cadena HTTPS→IIS/ARR→Orthanc OK. El PACS es <b>dcm4chee 2.x</b> (JBoss; se identifica por <font face='Courier' size=9>172.16.10.100:8080/jmx-console</font>): el AE se registra en su consola web (AE Management).")
+    warn("Gotcha operativo", "<font face='Courier' size=9>Restart-Service Orthanc</font> a veces no relevanta el servicio (la parada se cuelga). Patrón fiable: <font face='Courier' size=9>Stop-Service Orthanc -Force; Start-Service Orthanc</font>; y si el stop se cuelga, matar el PID (<font face='Courier' size=9>Stop-Process -Force</font>) y luego <font face='Courier' size=9>Start-Service</font>.")
 
 # ============================ CAP 1 ============================
 def cap1():
